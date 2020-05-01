@@ -5,7 +5,93 @@ package db
 
 import (
 	"context"
+	"database/sql"
 )
+
+const getMetricForSource = `-- name: GetMetricForSource :many
+select source, ts, inserted_at, name, value
+from public.metrics
+where source = $1
+`
+
+func (q *Queries) GetMetricForSource(ctx context.Context, source string) ([]Metric, error) {
+	rows, err := q.db.QueryContext(ctx, getMetricForSource, source)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Metric
+	for rows.Next() {
+		var i Metric
+		if err := rows.Scan(
+			&i.Source,
+			&i.Ts,
+			&i.InsertedAt,
+			&i.Name,
+			&i.Value,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getMetricStatsPerPeriod = `-- name: GetMetricStatsPerPeriod :many
+select m.source,
+       m.name,
+       to_timestamp(floor((extract('epoch' from m.ts) / $1::int)) * $1::int) ts,
+       avg(m.value) avg,
+       max(m.value) max,
+       min(m.value) min
+from public.metrics m
+group by m.source, m.name, ts_bucket
+`
+
+type GetMetricStatsPerPeriodRow struct {
+	Source string      `json:"source"`
+	Name   string      `json:"name"`
+	Ts     interface{} `json:"ts"`
+	Avg    interface{} `json:"avg"`
+	Max    interface{} `json:"max"`
+	Min    interface{} `json:"min"`
+}
+
+func (q *Queries) GetMetricStatsPerPeriod(ctx context.Context, seconds int32) ([]GetMetricStatsPerPeriodRow, error) {
+	rows, err := q.db.QueryContext(ctx, getMetricStatsPerPeriod, seconds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetMetricStatsPerPeriodRow
+	for rows.Next() {
+		var i GetMetricStatsPerPeriodRow
+		if err := rows.Scan(
+			&i.Source,
+			&i.Name,
+			&i.Ts,
+			&i.Avg,
+			&i.Max,
+			&i.Min,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
 
 const getMetrics = `-- name: GetMetrics :many
 select distinct(m.source)
@@ -36,87 +122,33 @@ func (q *Queries) GetMetrics(ctx context.Context) ([]string, error) {
 	return items, nil
 }
 
-const metricForSource = `-- name: MetricForSource :many
-select source, ts, inserted_at, name, value
-from public.metrics
-where source = $1
+const insertMetric = `-- name: InsertMetric :one
+INSERT INTO public.metrics (ts, source, name, value)
+VALUES ($1, $2, $3, $4)
+RETURNING source, ts, inserted_at, name, value
 `
 
-func (q *Queries) MetricForSource(ctx context.Context, source string) ([]Metric, error) {
-	rows, err := q.db.QueryContext(ctx, metricForSource, source)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Metric
-	for rows.Next() {
-		var i Metric
-		if err := rows.Scan(
-			&i.Source,
-			&i.Ts,
-			&i.InsertedAt,
-			&i.Name,
-			&i.Value,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+type InsertMetricParams struct {
+	Ts     sql.NullTime    `json:"ts"`
+	Source string          `json:"source"`
+	Name   string          `json:"name"`
+	Value  sql.NullFloat64 `json:"value"`
 }
 
-const metricStatsPerPeriod = `-- name: MetricStatsPerPeriod :many
-select m.source,
-       m.name,
-       to_timestamp(floor((extract('epoch' from m.ts) / $1::int)) * $1::int) ts,
-       avg(m.value) avg,
-       max(m.value) max,
-       min(m.value) min
-from public.metrics m
-group by m.source, m.name, ts_bucket
-`
-
-type MetricStatsPerPeriodRow struct {
-	Source string      `json:"source"`
-	Name   string      `json:"name"`
-	Ts     interface{} `json:"ts"`
-	Avg    interface{} `json:"avg"`
-	Max    interface{} `json:"max"`
-	Min    interface{} `json:"min"`
-}
-
-func (q *Queries) MetricStatsPerPeriod(ctx context.Context, seconds int32) ([]MetricStatsPerPeriodRow, error) {
-	rows, err := q.db.QueryContext(ctx, metricStatsPerPeriod, seconds)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []MetricStatsPerPeriodRow
-	for rows.Next() {
-		var i MetricStatsPerPeriodRow
-		if err := rows.Scan(
-			&i.Source,
-			&i.Name,
-			&i.Ts,
-			&i.Avg,
-			&i.Max,
-			&i.Min,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+func (q *Queries) InsertMetric(ctx context.Context, arg InsertMetricParams) (Metric, error) {
+	row := q.db.QueryRowContext(ctx, insertMetric,
+		arg.Ts,
+		arg.Source,
+		arg.Name,
+		arg.Value,
+	)
+	var i Metric
+	err := row.Scan(
+		&i.Source,
+		&i.Ts,
+		&i.InsertedAt,
+		&i.Name,
+		&i.Value,
+	)
+	return i, err
 }

@@ -7,9 +7,10 @@ import (
 )
 
 type Querier interface {
+	GetMetricForSource(ctx context.Context, source string) ([]Metric, error)
+	GetMetricStatsPerPeriod(ctx context.Context, seconds int32) ([]GetMetricStatsPerPeriodRow, error)
 	GetMetrics(ctx context.Context) ([]string, error)
-	MetricForSource(ctx context.Context, source string) ([]Metric, error)
-	MetricStatsPerPeriod(ctx context.Context, seconds int32) ([]MetricStatsPerPeriodRow, error)
+	InsertMetric(ctx context.Context, arg InsertMetricParams) (Metric, error)
 }
 
 var _ Querier = (*Queries)(nil)
