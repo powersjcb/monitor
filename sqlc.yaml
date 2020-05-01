@@ -1,0 +1,9 @@
+version: "1"
+packages:
+  - name: "db"
+    emit_json_tags: true
+    emit_prepared_queries: false
+    emit_interface: true
+    path: "./server/internal/db"
+    queries: "./server/internal/sql/queries/"
+    schema: "./server/internal/sql/migrations/"
