@@ -1,9 +1,18 @@
+# Notes
+
+
+## Readings
+Schema design for timeseries data with columnar datastore (BigQuery).
+
+https://cloud.google.com/bigtable/docs/schema-design-time-series
+
+## Migrations
+
+
+
 ## Installation
 
-Setup timescaledb
+Setup
 - `$ brew install postgresql`
-- `$ brew tap timescale/tap`
-- `$ brew install timescaledb`
-- `$ /usr/local/bin/timescaledb_move.sh`
-- `$ timescaledb-tune`
 - `$ brew services restart postgresql`
+- `$ brew `
