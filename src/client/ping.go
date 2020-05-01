@@ -10,6 +10,12 @@ import (
 	"time"
 )
 
+type PingResult struct {
+	Target string
+	Duration time.Duration
+	Timestamp time.Time
+}
+
 type PingClient struct {
 	dnsEntries map[string] net.IP
 }
@@ -29,7 +35,7 @@ func (c PingClient) dnsLookup(host string) (net.IP, error) {
 	return ips[0], nil
 }
 
-func (c PingClient) Ping(host string) error {
+func (c PingClient) Ping(host string) (PingResult, error) {
 	m := icmp.Message{
 		Type:     ipv4.ICMPTypeEcho,
 		Code:     0,
@@ -42,18 +48,18 @@ func (c PingClient) Ping(host string) error {
 	}
 	targetIP, err := c.dnsLookup(host)
 	if err != nil {
-		return err
+		return PingResult{}, err
 	}
 
 	packetConn, err := icmp.ListenPacket("ip4:icmp", "0.0.0.0")
 	if err != nil {
-		return err
+		return PingResult{}, err
 	}
 	defer packetConn.Close()
 
 	mb, err := m.Marshal(nil)
 	if err != nil {
-		return err
+		return PingResult{}, err
 	}
 
 	s := time.Now()
@@ -66,10 +72,8 @@ func (c PingClient) Ping(host string) error {
 	respSize, _, err := packetConn.ReadFrom(rb)
 	duration := time.Now().Sub(s)
 	if err != nil {
-		return errors.New(fmt.Sprintf("connection error: %s", err.Error()))
+		return PingResult{}, errors.New(fmt.Sprintf("connection error: %s", err.Error()))
 	}
-
 	_, err = icmp.ParseMessage(ipv4.ICMPTypeEcho.Protocol(), rb[:respSize])
-	fmt.Println(host, " respond time: ", duration)
-	return nil
+	return PingResult{Target: host, Duration: duration, Timestamp: s}, nil
 }

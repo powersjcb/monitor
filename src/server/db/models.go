@@ -12,5 +12,6 @@ type Metric struct {
 	Ts         sql.NullTime    `json:"ts"`
 	InsertedAt time.Time       `json:"inserted_at"`
 	Name       string          `json:"name"`
+	Target     string          `json:"target"`
 	Value      sql.NullFloat64 `json:"value"`
 }

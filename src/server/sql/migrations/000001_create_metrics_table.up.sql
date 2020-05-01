@@ -5,6 +5,7 @@ create table metrics (
     ts timestamp,
     inserted_at timestamp not null,
     name varchar(100) not null,
+    target varchar(100) not null,
     value float
 );
 

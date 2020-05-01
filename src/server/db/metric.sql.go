@@ -9,7 +9,7 @@ import (
 )
 
 const getMetricForSource = `-- name: GetMetricForSource :many
-select source, ts, inserted_at, name, value
+select source, ts, inserted_at, name, target, value
 from public.metrics
 where source = $1
 `
@@ -28,6 +28,7 @@ func (q *Queries) GetMetricForSource(ctx context.Context, source string) ([]Metr
 			&i.Ts,
 			&i.InsertedAt,
 			&i.Name,
+			&i.Target,
 			&i.Value,
 		); err != nil {
 			return nil, err
@@ -123,15 +124,16 @@ func (q *Queries) GetMetrics(ctx context.Context) ([]string, error) {
 }
 
 const insertMetric = `-- name: InsertMetric :one
-INSERT INTO public.metrics (ts, source, name, value)
-VALUES ($1, $2, $3, $4)
-RETURNING source, ts, inserted_at, name, value
+INSERT INTO public.metrics (ts, source, name, target, value, inserted_at)
+VALUES ($1, $2, $3, $4, $5, NOW())
+RETURNING source, ts, inserted_at, name, target, value
 `
 
 type InsertMetricParams struct {
 	Ts     sql.NullTime    `json:"ts"`
 	Source string          `json:"source"`
 	Name   string          `json:"name"`
+	Target string          `json:"target"`
 	Value  sql.NullFloat64 `json:"value"`
 }
 
@@ -140,6 +142,7 @@ func (q *Queries) InsertMetric(ctx context.Context, arg InsertMetricParams) (Met
 		arg.Ts,
 		arg.Source,
 		arg.Name,
+		arg.Target,
 		arg.Value,
 	)
 	var i Metric
@@ -148,6 +151,7 @@ func (q *Queries) InsertMetric(ctx context.Context, arg InsertMetricParams) (Met
 		&i.Ts,
 		&i.InsertedAt,
 		&i.Name,
+		&i.Target,
 		&i.Value,
 	)
 	return i, err

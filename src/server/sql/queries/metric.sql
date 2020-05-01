@@ -1,6 +1,6 @@
 -- name: InsertMetric :one
-INSERT INTO public.metrics (ts, source, name, value)
-VALUES ($1, $2, $3, $4)
+INSERT INTO public.metrics (ts, source, name, target, value, inserted_at)
+VALUES ($1, $2, $3, $4, $5, NOW())
 RETURNING *;
 
 
