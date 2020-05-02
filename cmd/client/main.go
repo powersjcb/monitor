@@ -7,11 +7,10 @@ import (
 
 func main() {
 	pingConfigs := []client.PingConfig{
-		//{URL: "192.168.7.1"},
 		{URL: "google.com"},
 		{URL: "amazon.com"},
+		{URL: "ec2.us-west-1.amazonaws.com"},
 		{URL: "cloudflare.com"},
-		{URL: "zoom.us"},
 	}
 
 	err := client.RunPings(pingConfigs)

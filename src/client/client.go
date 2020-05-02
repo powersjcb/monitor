@@ -17,14 +17,15 @@ type PingConfig struct {
 // with some overall timeout, ping all the services
 // todo: return some results
 func RunPings(configs []PingConfig) error {
-	c := PingClient{}
+	c := PingClient{Timeout: time.Second * 10}
 
-	ticker := time.NewTicker(1 * time.Second)
+	ticker := time.NewTicker(5 * time.Second)
 	for _ = range ticker.C {
 		for _, config := range configs {
 			p, err := c.Ping(config.URL)
 			if err != nil {
-				return err
+				fmt.Println(config.URL, " ", err)
+				continue
 			}
 
 			body, err := json.Marshal(&db.InsertMetricParams{
@@ -39,6 +40,7 @@ func RunPings(configs []PingConfig) error {
 			_, err = http.Post("http://127.0.0.1:8080/metric", "application/json", bytes.NewBuffer(body))
 			if err != nil {
 				fmt.Println(err)
+				continue
 			}
 		}
 	}

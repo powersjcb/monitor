@@ -18,6 +18,7 @@ type PingResult struct {
 
 type PingClient struct {
 	dnsEntries map[string] net.IP
+	Timeout time.Duration
 }
 
 func (c PingClient) dnsLookup(host string) (net.IP, error) {
@@ -52,6 +53,14 @@ func (c PingClient) Ping(host string) (PingResult, error) {
 	}
 
 	packetConn, err := icmp.ListenPacket("ip4:icmp", "0.0.0.0")
+	if err != nil {
+		return PingResult{}, err
+	}
+	err = packetConn.SetWriteDeadline(time.Now().Add(c.Timeout))
+	if err != nil {
+		return PingResult{}, err
+	}
+	err = packetConn.SetReadDeadline(time.Now().Add(c.Timeout))
 	if err != nil {
 		return PingResult{}, err
 	}
