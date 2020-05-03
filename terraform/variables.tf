@@ -1,23 +1,28 @@
-variable "project" {
-  description = "The project ID to create the resources in."
-  type        = string
-  default     = "jacobpowers-200819"
+variable "project_id" {
+  type = string
+  default = "carbide-datum-276117"
+}
+
+variable "google_creds" {
+  description = "Filesystem location of goole api key"
+  type = string
+  default = "~/carbide-datum-276117-aa7fb5dcd251.json"
 }
 
 variable "region" {
   description = "The region to create the resources in."
   type        = string
-  default     = "us-west1"
+  default     = "us-west2"
 }
 
-variable "name" {
+variable "app_name" {
   description = "The name of the deployment."
   type        = string
   default     = "monitor"
 }
 
-variable "zone" {
-  description = "The name of the zone"
+variable "zone_char" {
+  description = "The char name of the zone"
   type        = string
-  default     = "us-west1-a"
+  default     = "a"
 }

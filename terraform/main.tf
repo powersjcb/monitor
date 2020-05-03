@@ -1,27 +1,52 @@
-provider "google" {
-  credentials = file("~/jacobpowers-2405446363b3.json")
-  project = var.project
-  region = var.region
-}
-
-resource "random_id" "instance_id" {
+resource "random_id" "default" {
   byte_length = 8
 }
 
-// allow load balancers access to instance
-resource "google_compute_firewall" "firewall" {
-  name = "monitor-firewall"
-  network = "default"
+provider "google" {
+  credentials = file(var.google_creds)
+  region = var.region
+}
 
-  // load balancer IP ranges
-  // https://cloud.google.com/load-balancing/docs/https/#firewall_rules
-  source_ranges = ["130.211.0.0/22", "35.191.0.0/16"]
+resource "google_app_engine_application" "app" {
+  project = var.project_id
+  location_id = var.region
+}
 
-  target_tags = ["monitor-app"]
-  source_tags = ["monitor-app"]
+resource "random_id" "db_name_suffix" {
+  byte_length = 4
+}
 
-  allow {
-    protocol = "tcp"
-    ports = ["5000"]
+resource "google_sql_database_instance" "primary" {
+  // google config
+  name = "${var.app_name}-db-primary-${random_id.db_name_suffix.hex}-instance"
+  region = var.region
+  project = var.project_id
+
+  // database config
+  database_version = "POSTGRES_12"
+
+  settings {
+    tier = "db-f1-micro"
+
+    disk_autoresize = true
+    disk_size = 10
   }
+}
+
+resource "random_password" "db_password" {
+  length = "32"
+  special = false
+}
+
+resource "google_sql_user" "app" {
+  project = var.project_id
+  instance = google_sql_database_instance.primary.name
+  name = "app"
+  password = random_password.db_password.result
+}
+
+resource "google_sql_database" "primary" {
+  project = var.project_id
+  name = "${var.app_name}-db-primary-${random_id.db_name_suffix.hex}"
+  instance = google_sql_database_instance.primary.name
 }
