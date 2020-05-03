@@ -12,13 +12,15 @@ resource "google_app_engine_application" "app" {
   location_id = var.region
 }
 
-resource "google_app_engine_domain_mapping" "domain_mapping" {
-  domain_name = "jacobpowers.me"
-
-  ssl_settings {
-    ssl_management_type = "AUTOMATIC"
-  }
-}
+// todo: configure when domain finishes transfer from amazon -> google
+//resource "google_app_engine_domain_mapping" "domain_mapping" {
+//  project = var.project_id
+//  domain_name = "jacobpowers.me"
+//
+//  ssl_settings {
+//    ssl_management_type = "AUTOMATIC"
+//  }
+//}
 
 resource "google_app_engine_firewall_rule" "rule" {
   project = var.project_id
