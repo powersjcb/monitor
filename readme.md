@@ -1,6 +1,10 @@
 # Notes
 
 
+# Deploy
+GO111MODULE=on gcloud app deploy app.yaml
+
+
 ## Readings
 Schema design for timeseries data with columnar datastore (BigQuery).
 

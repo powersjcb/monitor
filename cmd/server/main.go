@@ -5,6 +5,7 @@ import (
 	"github.com/powersjcb/monitor/src/gateway"
 	"github.com/powersjcb/monitor/src/server/db"
 	"log"
+	"os"
 
 	_ "github.com/lib/pq"
 )
@@ -16,7 +17,8 @@ func main() {
 	}
 	q := db.New(conn)
 
-	s := gateway.NewHTTPServer(q)
+	port := os.Getenv("PORT")
+	s := gateway.NewHTTPServer(q, port)
 	err = s.Start()
 	if err != nil {
 		log.Fatal(err.Error())

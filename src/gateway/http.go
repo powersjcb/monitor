@@ -24,17 +24,22 @@ func NewLogger(handler http.Handler) *Logger {
 
 type HTTPServer struct {
 	q *db.Queries
+	port string
 }
 
-func NewHTTPServer(q *db.Queries) HTTPServer {
-	return HTTPServer{q: q}
+func NewHTTPServer(q *db.Queries, port string) HTTPServer {
+	return HTTPServer{
+		q: q,
+		port: port,
+	}
 }
 
 func (s *HTTPServer) Start() error {
 	serverMux := http.NewServeMux()
+	serverMux.HandleFunc("/", s.Status)
 	serverMux.HandleFunc("/metric", s.Metric)
 	server := &http.Server{
-		Addr: "127.0.0.1:8080",
+		Addr: "0.0.0.0:" + s.port,
 		Handler: NewLogger(serverMux),
 		ReadTimeout: 50 * time.Millisecond,
 		WriteTimeout: 50 * time.Millisecond,
@@ -46,6 +51,11 @@ func (s *HTTPServer) Start() error {
 	}
 
 	return nil
+}
+
+func(s HTTPServer) Status(rw http.ResponseWriter, r *http.Request) {
+	_, _ = rw.Write([]byte("ok"))
+	rw.WriteHeader(200)
 }
 
 func (s HTTPServer) Metric(rw http.ResponseWriter, r *http.Request) {
