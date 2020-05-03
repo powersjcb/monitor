@@ -1,24 +1,29 @@
 package main
 
 import (
+	"context"
 	"database/sql"
+	_ "github.com/lib/pq"
 	"github.com/powersjcb/monitor/src/gateway"
+	"github.com/powersjcb/monitor/src/server"
 	"github.com/powersjcb/monitor/src/server/db"
 	"log"
-	"os"
-
-	_ "github.com/lib/pq"
 )
 
 func main() {
-	conn, err := sql.Open("postgres", "host=127.0.0.1 dbname=monitor sslmode=disable")
+	ctx := context.Background()
+	c, err := server.GetConfig(ctx)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	conn, err := sql.Open("postgres", c.Database)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 	q := db.New(conn)
 
-	port := os.Getenv("PORT")
-	s := gateway.NewHTTPServer(q, port)
+	s := gateway.NewHTTPServer(q, c.Port)
 	err = s.Start()
 	if err != nil {
 		log.Fatal(err.Error())
