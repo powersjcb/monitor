@@ -1,16 +1,33 @@
-resource "random_id" "default" {
-  byte_length = 8
-}
-
 provider "google" {
   credentials = file(var.google_creds)
   region = var.region
+}
+
+resource "random_id" "default" {
+  byte_length = 8
 }
 
 resource "google_app_engine_application" "app" {
   project = var.project_id
   location_id = var.region
 }
+
+resource "google_app_engine_domain_mapping" "domain_mapping" {
+  domain_name = "jacobpowers.me"
+
+  ssl_settings {
+    ssl_management_type = "AUTOMATIC"
+  }
+}
+
+resource "google_app_engine_firewall_rule" "rule" {
+  project = var.project_id
+  priority = 1000
+  action = "ALLOW"
+  source_range = "*"
+}
+
+// DATABASE SETUP
 
 resource "random_id" "db_name_suffix" {
   byte_length = 4
@@ -30,6 +47,14 @@ resource "google_sql_database_instance" "primary" {
 
     disk_autoresize = true
     disk_size = 10
+
+    ip_configuration {
+      ipv4_enabled = true
+      authorized_networks {
+        name = "all-ipv4"
+        value = "0.0.0.0/0"
+      }
+    }
   }
 }
 
