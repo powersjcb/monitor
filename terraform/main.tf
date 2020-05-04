@@ -3,6 +3,27 @@ provider "google-beta" {
   region = var.region
 }
 
+// comment out if bootstrapping and terraform bucket doesnt exist yet
+terraform {
+  backend "gcs" {
+    bucket = "workspace_terraform_state"
+    prefix = "terraform/state"
+  }
+}
+
+// maintain bucket for terraform backend
+resource "google_storage_bucket" "tf_state" {
+  project       = var.project_id
+  name          = "workspace_terraform_state"
+  location      = "us-west2"
+  requester_pays = false
+
+  versioning {
+    enabled = true
+  }
+}
+
+// setup application
 resource "random_id" "default" {
   byte_length = 8
 }
