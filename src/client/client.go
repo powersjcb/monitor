@@ -11,6 +11,7 @@ import (
 )
 
 type PingConfig struct {
+	Name string
 	URL string
 }
 

@@ -37,12 +37,13 @@ func (c PingClient) dnsLookup(host string) (net.IP, error) {
 }
 
 func (c PingClient) Ping(host string) (PingResult, error) {
+	msgID := rand.Intn(1 << 15 + 1)
 	m := icmp.Message{
 		Type:     ipv4.ICMPTypeEcho,
 		Code:     0,
 		Checksum: 0, // checksum populated by Marshal func
 		Body:     &icmp.Echo{
-			ID:   rand.Intn(1 << 15 + 1), // 16bit number
+			ID:   msgID, // 16bit number
 			Seq:  0,
 			Data: nil,
 		},
@@ -83,6 +84,16 @@ func (c PingClient) Ping(host string) (PingResult, error) {
 	if err != nil {
 		return PingResult{}, errors.New(fmt.Sprintf("connection error: %s", err.Error()))
 	}
-	_, err = icmp.ParseMessage(ipv4.ICMPTypeEcho.Protocol(), rb[:respSize])
+	resp, err := icmp.ParseMessage(ipv4.ICMPTypeEcho.Protocol(), rb[:respSize])
+	if err != nil {
+		return PingResult{}, err
+	}
+	echoResp, ok := resp.Body.(*icmp.Echo)
+	if !ok {
+		return PingResult{}, errors.New("invalid ping response")
+	}
+	if echoResp.ID != msgID {
+		return PingResult{}, errors.New("invalid echo: response collision")
+	}
 	return PingResult{Target: host, Duration: duration, Timestamp: s}, nil
 }
