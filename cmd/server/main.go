@@ -16,7 +16,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-
 	conn, err := sql.Open("postgres", c.Database)
 	if err != nil {
 		log.Fatal(err.Error())
