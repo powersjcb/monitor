@@ -37,7 +37,7 @@ func RunPings(configs []PingConfig) error {
 			})
 
 			fmt.Println("target: ", p.Target, " duration: ", p.Duration)
-			_, err = http.Post("http://127.0.0.1:8080/metric", "application/json", bytes.NewBuffer(body))
+			_, err = http.Post("https://carbide-datum-276117.wl.r.appspot.com/metric", "application/json", bytes.NewBuffer(body))
 			if err != nil {
 				fmt.Println(err)
 				continue

@@ -1,4 +1,4 @@
-provider "google" {
+provider "google-beta" {
   credentials = file(var.google_creds)
   region = var.region
 }
@@ -76,4 +76,40 @@ resource "google_sql_database" "primary" {
   project = var.project_id
   name = "${var.app_name}-db-primary-${random_id.db_name_suffix.hex}"
   instance = google_sql_database_instance.primary.name
+}
+
+// ******
+// permit app engine to read secrets
+// ******
+
+// note: this must be imported after running "gloud app deploy"
+resource "google_service_account" "app_engine" {
+  project = var.project_id
+  account_id = var.project_id
+  display_name = "App Engine default service account"
+}
+
+// enables secret manager api
+resource "google_project_service" "secretmanager" {
+  provider = google-beta
+  service  = "secretmanager.googleapis.com"
+}
+
+resource "google_secret_manager_secret" "db_connection" {
+  provider = google-beta
+  secret_id = "${var.app_name}_db_connection"
+
+  replication {
+    automatic = true
+  }
+  depends_on = [google_project_service.secretmanager]
+}
+
+resource "google_secret_manager_secret_iam_member" "app_engine" {
+  provider = google-beta
+  project = var.project_id
+
+  secret_id = google_secret_manager_secret.db_connection.id
+  role = "roles/secretmanager.secretAccessor"
+  member = "serviceAccount:${google_service_account.app_engine.email}"
 }
