@@ -2,8 +2,11 @@
 
 
 # Deploy
-GO111MODULE=on gcloud app deploy app.yaml
+How to deploy the app to production:
+- GO111MODULE=on gcloud app deploy app.yaml
 
+Future work:
+- TODO: create a deploy script/workflow that handles migrations
 
 ## Readings
 Schema design for timeseries data with columnar datastore (BigQuery).
@@ -14,8 +17,6 @@ https://cloud.google.com/bigtable/docs/schema-design-time-series
 Code generation for database queries requires `sqlc`
 - `$ brew install kyleconroy/sqlc/sqlc`
 - `$ sqlc generate`
-
-
 
 ## Installation
 
