@@ -1,12 +1,13 @@
 # Notes
 
 # Todo
+- [ ] execute ping requests using udp
+- [ ] intermittently update default gateway ip
 - [ ] super lightweight UI/DB for recording and plotting metrics
 - [ ] create a deploy script that handle migrations
 - [ ] add desktop push notification when pings get terrible
 - [ ] bulk upload results
 - [ ] update sqlc dependency to support null IPs (track ip from host) 
-
 
 # Deploy
 How to deploy the app to production:
