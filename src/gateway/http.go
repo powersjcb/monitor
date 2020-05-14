@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"github.com/powersjcb/monitor/src/client"
 	"github.com/powersjcb/monitor/src/server/db"
-	"google.golang.org/appengine/log"
+	"log"
 	"net/http"
 	"time"
 )
@@ -63,13 +63,13 @@ func (s HTTPServer) Metric(rw http.ResponseWriter, r *http.Request) {
 	var m db.InsertMetricParams
 	err := json.NewDecoder(r.Body).Decode(&m)
 	if err != nil {
-		log.Errorf(r.Context(), err.Error())
+		log.Printf(err.Error())
 		rw.WriteHeader(500)
 	}
 
 	_, err = s.q.InsertMetric(r.Context(), m)
 	if err != nil {
-		log.Errorf(r.Context(), err.Error())
+		log.Printf(err.Error())
 		rw.WriteHeader(500)
 	}
 }
