@@ -1,37 +1,18 @@
 package main
 
 import (
-	"github.com/powersjcb/monitor/src/client"
+	"flag"
 	"github.com/jackpal/gateway"
+	"github.com/powersjcb/monitor/src/client"
 	"log"
 	"strings"
 	"time"
 )
 
 func main() {
-	pingConfigs := []client.PingConfig{
-		{
-			URL: "google.com",
-			Period: 5 * time.Second,
-		},
-		{
-			URL: "amazon.com",
-			Period: 5 * time.Second,
-		},
-		{
-			URL: "ec2.us-west-1.amazonaws.com",
-			Period: 5 * time.Second,
-		},
-		{
-			URL: "cloudflare.com",
-			Period: 5 * time.Second,
-		},
-		{
-			URL: "wl.r.appspot.com",
-			Name: "app-engine@us-west2",
-			Period: 5 * time.Second,
-		},
-	}
+	runOnce := flag.Bool("once", false, "Run pings only one time.")
+	flag.Parse()
+	pingConfigs := client.DefaultPingConfigs
 	gw, err := gateway.DiscoverGateway()
 	if err == nil && gw != nil && gw.String() != "" {
 		if strings.Contains(gw.String(), ":") {
@@ -42,7 +23,7 @@ func main() {
 		log.Printf("unable to discover default gateway: %s", err.Error())
 	}
 
-	err = client.RunPings(pingConfigs)
+	err = client.RunPings(pingConfigs, *runOnce)
 	if err != nil {
 		log.Fatal(err)
 	}
