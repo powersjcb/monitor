@@ -48,13 +48,15 @@ type PingService struct {
 	mux sync.Mutex
 	conn *icmp.PacketConn
 	dnsEntries map[string]net.IP
+	RunOnce bool
 	ResultHandlers []ResultHandler
+	resultsCount uint64
 	Inflight LRU
 	Targets []PingConfig
 	Timeout time.Duration
 }
 
-func NewPingService(targets []PingConfig, timeout time.Duration) PingService {
+func NewService(targets []PingConfig, timeout time.Duration, runOnce bool) PingService {
 	if timeout < 1 * time.Millisecond {
 		panic("timeout too small: " + string(timeout))
 	}
@@ -62,6 +64,8 @@ func NewPingService(targets []PingConfig, timeout time.Duration) PingService {
 		mux:            sync.Mutex{},
 		conn:           nil,
 		dnsEntries:     make(map[string]net.IP),
+		RunOnce: 		runOnce,
+		resultsCount:   0,
 		ResultHandlers: nil,
 		Inflight:       NewLRU(25),
 		Targets:        targets,
@@ -74,6 +78,13 @@ func (c *PingService) getTimeout() time.Duration {
 	t := c.Timeout
 	c.mux.Unlock()
 	return t
+}
+
+func (c *PingService) getResultsCount() uint64 {
+	c.mux.Lock()
+	val := c.resultsCount
+	c.mux.Unlock()
+	return val
 }
 
 func (c *PingService) dnsLookup(host string) (net.IP, error) {
@@ -175,7 +186,8 @@ func (c *PingService) nextICMP() (*icmp.Echo, error) {
 	return echo, nil
 }
 
-func (c *PingService) listen() error {
+func (c *PingService) listen(wg *sync.WaitGroup) error {
+	wg.Done()
 	for true {
 		icmpMessage, err := c.nextICMP()
 		if err != nil {
@@ -205,6 +217,20 @@ func (c *PingService) listen() error {
 			if err != nil {
 				return err
 			}
+
+			c.mux.Lock()
+			c.resultsCount++
+			c.mux.Unlock()
+
+			// maybe shutdown
+			if c.RunOnce && c.getResultsCount() > 0 {
+				c.mux.Lock()
+				remaining := c.Inflight.Len()
+				c.mux.Unlock()
+				if remaining == 0 {
+					return nil
+				}
+			}
 		}
 	}
 	return nil
@@ -233,23 +259,33 @@ func (c *PingService) Start() error {
 	if err != nil {
 		return err
 	}
+	startupWg := &sync.WaitGroup{}
+	startupWg.Add(1)
 
 	for _, target := range c.Targets {
 		// spawn a ticker for each config
 		p := target.Period
 		url := target.URL
 		go func () {
-			ticker := time.NewTicker(p)
-			for _ = range ticker.C {
+			startupWg.Wait()
+			if c.RunOnce {
 				err := c.sendRequest(url)
 				if err != nil {
 					log.Println(err.Error())
+				}
+			} else {
+				ticker := time.NewTicker(p)
+				for _ = range ticker.C {
+					err := c.sendRequest(url)
+					if err != nil {
+						log.Println(err.Error())
+					}
 				}
 			}
 		}()
 	}
 
-	err = c.listen()
+	err = c.listen(startupWg)
 	if err != nil {
 		return err
 	}

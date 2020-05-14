@@ -2,7 +2,6 @@ package gateway
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/powersjcb/monitor/src/server/db"
 	"log"
 	"net/http"
@@ -68,7 +67,7 @@ func (s HTTPServer) Metric(rw http.ResponseWriter, r *http.Request) {
 
 	_, err = s.q.InsertMetric(r.Context(), m)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 		_, _ = rw.Write([]byte(err.Error()))
 		rw.WriteHeader(500)
 	}
