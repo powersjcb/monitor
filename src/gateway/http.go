@@ -76,7 +76,7 @@ func (s HTTPServer) Metric(rw http.ResponseWriter, r *http.Request) {
 }
 
 func (s HTTPServer) Ping(rw http.ResponseWriter, r *http.Request) {
-	err := client.RunHTTPPings(client.DefaultPingConfigs, true)
+	err := client.RunHTTPPings(client.DefaultPingConfigs, true, r.Host)
 	if err != nil {
 		_, _ = rw.Write([]byte(err.Error()))
 		rw.WriteHeader(500)
