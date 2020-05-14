@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"github.com/powersjcb/monitor/src/client"
 	"github.com/powersjcb/monitor/src/server/db"
-	"log"
+	"google.golang.org/appengine/log"
 	"net/http"
 	"time"
 )
@@ -63,14 +63,13 @@ func (s HTTPServer) Metric(rw http.ResponseWriter, r *http.Request) {
 	var m db.InsertMetricParams
 	err := json.NewDecoder(r.Body).Decode(&m)
 	if err != nil {
-		_, _ = rw.Write([]byte(err.Error()))
+		log.Errorf(r.Context(), err.Error())
 		rw.WriteHeader(500)
 	}
 
 	_, err = s.q.InsertMetric(r.Context(), m)
 	if err != nil {
-		log.Println(err.Error())
-		_, _ = rw.Write([]byte(err.Error()))
+		log.Errorf(r.Context(), err.Error())
 		rw.WriteHeader(500)
 	}
 }
@@ -78,7 +77,7 @@ func (s HTTPServer) Metric(rw http.ResponseWriter, r *http.Request) {
 func (s HTTPServer) Ping(rw http.ResponseWriter, r *http.Request) {
 	err := client.RunHTTPPings(client.DefaultPingConfigs, true, r.Host)
 	if err != nil {
-		_, _ = rw.Write([]byte(err.Error()))
+		log.Errorf(r.Context(), err.Error())
 		rw.WriteHeader(500)
 	}
 }
