@@ -2,9 +2,9 @@ package gateway
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/powersjcb/monitor/src/client"
 	"github.com/powersjcb/monitor/src/server/db"
-	"log"
 	"net/http"
 	"time"
 )
@@ -14,8 +14,8 @@ type Logger struct {
 }
 
 func (l *Logger) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	fmt.Printf("%s %s %v\n", r.Method, r.URL.Path, time.Now())
 	l.handler.ServeHTTP(w, r)
-	log.Printf("%s %s %v", r.Method, r.URL.Path, time.Now())
 }
 
 func NewLogger(handler http.Handler) *Logger {
@@ -36,14 +36,14 @@ func NewHTTPServer(q *db.Queries, port string) HTTPServer {
 
 func (s *HTTPServer) Start() error {
 	serverMux := http.NewServeMux()
-	serverMux.HandleFunc("/", s.Status)
 	serverMux.HandleFunc("/metric", s.Metric)
-	serverMux.HandleFunc("/ping", s.Ping)
+	serverMux.HandleFunc("/pings", s.Ping)
+	serverMux.HandleFunc("/status", s.Status)
 	server := &http.Server{
 		Addr: "0.0.0.0:" + s.port,
 		Handler: NewLogger(serverMux),
-		ReadTimeout: 50 * time.Millisecond,
-		WriteTimeout: 50 * time.Millisecond,
+		ReadTimeout: 30 * time.Second,
+		WriteTimeout: 30 * time.Second,
 	}
 
 	err := server.ListenAndServe()
@@ -56,28 +56,36 @@ func (s *HTTPServer) Start() error {
 
 func(s HTTPServer) Status(rw http.ResponseWriter, r *http.Request) {
 	_, _ = rw.Write([]byte("ok"))
-	rw.WriteHeader(200)
 }
 
 func (s HTTPServer) Metric(rw http.ResponseWriter, r *http.Request) {
 	var m db.InsertMetricParams
 	err := json.NewDecoder(r.Body).Decode(&m)
 	if err != nil {
-		log.Printf(err.Error())
+		fmt.Printf(err.Error())
 		rw.WriteHeader(500)
+		return
 	}
 
 	_, err = s.q.InsertMetric(r.Context(), m)
 	if err != nil {
-		log.Printf(err.Error())
+		fmt.Printf(err.Error())
 		rw.WriteHeader(500)
+		return
 	}
 }
 
 func (s HTTPServer) Ping(rw http.ResponseWriter, r *http.Request) {
 	err := client.RunHTTPPings(client.DefaultPingConfigs, true, r.Host)
 	if err != nil {
-		log.Errorf(r.Context(), err.Error())
+		fmt.Printf("failed to run pings", err.Error())
 		rw.WriteHeader(500)
+		return
+	}
+	_, err = rw.Write([]byte("pong"))
+	if err != nil {
+		fmt.Println(err.Error())
+		rw.WriteHeader(500)
+		return
 	}
 }

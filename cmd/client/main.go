@@ -2,9 +2,11 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"github.com/jackpal/gateway"
 	"github.com/powersjcb/monitor/src/client"
 	"log"
+	"os"
 	"strings"
 	"time"
 )
@@ -16,14 +18,14 @@ func main() {
 	gw, err := gateway.DiscoverGateway()
 	if err == nil && gw != nil && gw.String() != "" {
 		if strings.Contains(gw.String(), ":") {
-			log.Printf("ipv6 unimplemented: %s", gw.String())
+			fmt.Printf("ipv6 unimplemented: %s", gw.String())
 		}
 		pingConfigs = append(pingConfigs, client.PingConfig{URL: gw.String(), Name: "defaultGateway", Period: 5 * time.Second})
 	} else if err != nil {
-		log.Printf("unable to discover default gateway: %s", err.Error())
+		fmt.Printf("unable to discover default gateway: %s", err.Error())
 	}
-
-	err = client.RunPings(pingConfigs, *runOnce)
+	h, _ := os.Hostname()
+	err = client.RunPings(pingConfigs, *runOnce, h)
 	if err != nil {
 		log.Fatal(err)
 	}

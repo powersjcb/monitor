@@ -7,7 +7,6 @@ import (
 	"github.com/powersjcb/monitor/src/lib/dns"
 	"golang.org/x/net/icmp"
 	"golang.org/x/net/ipv4"
-	"log"
 	"math/rand"
 	"net"
 	"sync"
@@ -38,9 +37,9 @@ type LoggingHandler struct {}
 
 func (LoggingHandler) Handle(r PingResult, err error) error {
 	if err != nil {
-		log.Printf("failed for target %s: %s", r.Target, err.Error())
+		fmt.Printf("failed for target %s: %s", r.Target, err.Error())
 	} else {
-		log.Printf("name: %s, latency: %s\n", r.Target, r.Duration)
+		fmt.Printf("name: %s, latency: %s\n", r.Target, r.Duration)
 	}
 	return nil
 }
@@ -278,14 +277,14 @@ func (c *PingService) Start() error {
 			if c.RunOnce {
 				err := c.sendRequest(url)
 				if err != nil {
-					log.Println(err.Error())
+					fmt.Println(err.Error())
 				}
 			} else {
 				ticker := time.NewTicker(p)
 				for _ = range ticker.C {
 					err := c.sendRequest(url)
 					if err != nil {
-						log.Println(err.Error())
+						fmt.Println(err.Error())
 					}
 				}
 			}

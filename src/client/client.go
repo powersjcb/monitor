@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"github.com/powersjcb/monitor/src/server/db"
-	"log"
 	"net/http"
 	"time"
 )
@@ -37,16 +37,16 @@ func (h UploadHandler) Handle(result PingResult, err error) error {
 	}
 	_, err = http.Post(h.UploadURL, "application/json", bytes.NewBuffer(body))
 	if err != nil {
-		log.Println("failed to upload results", err)
+		fmt.Println("failed to upload results", err)
 	}
 	return nil
 }
 
-func RunPings(configs []PingConfig, runOnce bool) error {
+func RunPings(configs []PingConfig, runOnce bool, source string) error {
 	c := NewService(configs, time.Second * 10, runOnce)
 	c.AddHandler(LoggingHandler{})
 	c.AddHandler(UploadHandler{
-		Source: "Jacobs-MacBook-Pro.local",
+		Source: source,
 		Kind: "icmp",
 		UploadURL: "https://carbide-datum-276117.wl.r.appspot.com/metric",
 		Timeout:   time.Second * 5,
@@ -55,13 +55,13 @@ func RunPings(configs []PingConfig, runOnce bool) error {
 }
 
 func RunHTTPPings(configs []PingConfig, runOnce bool, source string) error {
-	c := NewHTTPService(configs, time.Second * 5, runOnce)
-	c.AddHandler(LoggingHandler{})
-	c.AddHandler(UploadHandler{
-		Source: source,
-		Kind: "http",
-		UploadURL: "https://carbide-datum-276117.wl.r.appspot.com/metric",
-		Timeout:   time.Second * 5,
-	})
+	c := NewHTTPService(configs, time.Second * 1, runOnce)
+	//c.AddHandler(LoggingHandler{})
+	//c.AddHandler(UploadHandler{
+	//	Source: source,
+	//	Kind: "http",
+	//	UploadURL: "https://carbide-datum-276117.wl.r.appspot.com/metric",
+	//	Timeout:   time.Second * 5,
+	//})
 	return c.Start()
 }

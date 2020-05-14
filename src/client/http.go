@@ -138,18 +138,24 @@ func get(urlString string, cachedIP net.IP, timeout time.Duration) (resp *http.R
 	dialer := &net.Dialer{
 		Timeout:   timeout,
 	}
+
+	formattedIP := cachedIP.String()
+	if cachedIP.To4() == nil {
+		// ivp6 requires [::]:80 formatting
+		formattedIP = "[" + formattedIP + "]"
+	}
+
 	// Create a transport like http.DefaultTransport, but with a specified localAddr
 	transport := &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
 		DialContext: 		   func (ctx context.Context, network, _ string) (net.Conn, error) {
-			return dialer.DialContext(ctx, network, cachedIP.String() + ":80")
+			return dialer.DialContext(ctx, network, formattedIP + ":80")
 		},
 		MaxIdleConns:          100,
 		IdleConnTimeout:       timeout,
 		TLSHandshakeTimeout:   timeout,
 		ExpectContinueTimeout: timeout,
 	}
-
 	c := http.Client{
 		Transport: transport,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
