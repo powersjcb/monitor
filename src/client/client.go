@@ -41,7 +41,7 @@ func (h UploadHandler) Handle(result PingResult, err error) error {
 }
 
 func RunPings(configs []PingConfig) error {
-	c := NewService(configs, time.Second * 10, true)
+	c := NewService(configs, time.Second * 10, false)
 
 	c.AddHandler(LoggingHandler{})
 	c.AddHandler(UploadHandler{

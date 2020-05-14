@@ -163,6 +163,12 @@ func (c *PingService) init() error {
 		return err
 	}
 	c.conn = packetConn
+	if c.RunOnce {
+		err = packetConn.SetDeadline(time.Now().Add(c.Timeout))
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
