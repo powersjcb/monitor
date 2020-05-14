@@ -49,15 +49,16 @@ func (s *HTTPService) Start() error {
 		for _, target := range s.Targets {
 			if s.RunOnce {
 				res, err := s.send(target)
+				err = s.evalHandlers(res, err)
 				if err != nil {
-					err = s.evalHandlers(res, err)
-					if err != nil {
-						fmt.Printf(err.Error())
-					}
+					fmt.Printf(err.Error())
 				}
 			} else {
 				// add ticker
 			}
+		}
+		if s.RunOnce {
+			return nil
 		}
 	}
 	return nil
@@ -124,11 +125,12 @@ func (s *HTTPService) dnsLookup(host string) (net.IP, error) {
 // load balancers love telling you that you're wrong
 // we can abuse fast responses from 301/302s for https redirect
 func ensureHTTP(urlString string) (string, error) {
-	u, err := url.Parse(urlString)
+	s := "http://" + urlString
+	_, err := url.Parse(s)
 	if err != nil {
-		return urlString, err
+		return s, err
 	}
-	return "http://" + u.Host, nil
+	return s, nil
 }
 
 // we want to measure latency without dns lookup
@@ -140,7 +142,7 @@ func get(urlString string, cachedIP net.IP, timeout time.Duration) (resp *http.R
 	transport := &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
 		DialContext: 		   func (ctx context.Context, network, _ string) (net.Conn, error) {
-			return dialer.DialContext(ctx, network, cachedIP.String())
+			return dialer.DialContext(ctx, network, cachedIP.String() + ":80")
 		},
 		MaxIdleConns:          100,
 		IdleConnTimeout:       timeout,
@@ -150,6 +152,9 @@ func get(urlString string, cachedIP net.IP, timeout time.Duration) (resp *http.R
 
 	c := http.Client{
 		Transport: transport,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
 	}
-	return c.Get(urlString)
+	return c.Head(urlString)
 }

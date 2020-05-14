@@ -38,7 +38,7 @@ type LoggingHandler struct {}
 
 func (LoggingHandler) Handle(r PingResult, err error) error {
 	if err != nil {
-
+		log.Printf("failed for target %s: %s", r.Target, err.Error())
 	} else {
 		log.Printf("name: %s, latency: %s\n", r.Target, r.Duration)
 	}
