@@ -1,0 +1,4 @@
+cron:
+  - description: "ping default hosts"
+    url: /ping
+    schedule: every 5 mins

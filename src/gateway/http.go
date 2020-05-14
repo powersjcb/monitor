@@ -2,6 +2,7 @@ package gateway
 
 import (
 	"encoding/json"
+	"github.com/powersjcb/monitor/src/client"
 	"github.com/powersjcb/monitor/src/server/db"
 	"log"
 	"net/http"
@@ -37,6 +38,7 @@ func (s *HTTPServer) Start() error {
 	serverMux := http.NewServeMux()
 	serverMux.HandleFunc("/", s.Status)
 	serverMux.HandleFunc("/metric", s.Metric)
+	serverMux.HandleFunc("/ping", s.Ping)
 	server := &http.Server{
 		Addr: "0.0.0.0:" + s.port,
 		Handler: NewLogger(serverMux),
@@ -68,6 +70,14 @@ func (s HTTPServer) Metric(rw http.ResponseWriter, r *http.Request) {
 	_, err = s.q.InsertMetric(r.Context(), m)
 	if err != nil {
 		log.Println(err.Error())
+		_, _ = rw.Write([]byte(err.Error()))
+		rw.WriteHeader(500)
+	}
+}
+
+func (s HTTPServer) Ping(rw http.ResponseWriter, r *http.Request) {
+	err := client.RunHTTPPings(client.DefaultPingConfigs, true)
+	if err != nil {
 		_, _ = rw.Write([]byte(err.Error()))
 		rw.WriteHeader(500)
 	}

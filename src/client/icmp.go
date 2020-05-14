@@ -23,6 +23,7 @@ type PingRequest struct {
 	SentAt time.Time
 }
 
+// todo return information about success/failure
 type PingResult struct {
 	Target string
 	Duration time.Duration

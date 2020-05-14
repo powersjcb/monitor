@@ -42,7 +42,16 @@ func (h UploadHandler) Handle(result PingResult, err error) error {
 
 func RunPings(configs []PingConfig, runOnce bool) error {
 	c := NewService(configs, time.Second * 10, runOnce)
+	c.AddHandler(LoggingHandler{})
+	c.AddHandler(UploadHandler{
+		UploadURL: "https://carbide-datum-276117.wl.r.appspot.com/metric",
+		Timeout:   time.Second * 5,
+	})
+	return c.Start()
+}
 
+func RunHTTPPings(configs []PingConfig, runOnce bool) error {
+	c := NewHTTPService(configs, time.Second * 5, runOnce)
 	c.AddHandler(LoggingHandler{})
 	c.AddHandler(UploadHandler{
 		UploadURL: "https://carbide-datum-276117.wl.r.appspot.com/metric",
