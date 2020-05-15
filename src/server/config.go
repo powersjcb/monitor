@@ -14,6 +14,7 @@ import (
 type Config struct {
 	Port string
 	Database string
+	HCAPIKey string
 }
 
 func GetConfig(ctx context.Context) (Config, error) {
@@ -35,6 +36,12 @@ func GetConfig(ctx context.Context) (Config, error) {
 		return c, err
 	}
 
+	apiKey, err := getHoneycombKey(ctx, sc)
+	c.HCAPIKey = apiKey
+	if err != nil {
+		return c, err
+	}
+
 	return c, nil
 }
 
@@ -44,6 +51,14 @@ func getPort(_ context.Context) (string, error) {
 		return port, errors.New("invalid port: '" + port + "'")
 	}
 	return port, nil
+}
+
+func getHoneycombKey(ctx context.Context, sc *secretmanager.Client) (string, error) {
+	val := os.Getenv("HC_API_KEY")
+	if val != "" {
+		return val, nil
+	}
+	return getSecretValue(ctx, sc, "monitor_hc_api_key")
 }
 
 func getDBConnectionString(ctx context.Context, sc *secretmanager.Client) (string, error) {

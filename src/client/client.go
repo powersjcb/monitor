@@ -2,6 +2,7 @@ package client
 
 import (
 	"bytes"
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
@@ -54,14 +55,14 @@ func RunPings(configs []PingConfig, runOnce bool, source string) error {
 	return c.Start()
 }
 
-func RunHTTPPings(configs []PingConfig, runOnce bool, source string) error {
-	c := NewHTTPService(configs, time.Second * 1, runOnce)
-	//c.AddHandler(LoggingHandler{})
-	//c.AddHandler(UploadHandler{
-	//	Source: source,
-	//	Kind: "http",
-	//	UploadURL: "https://carbide-datum-276117.wl.r.appspot.com/metric",
-	//	Timeout:   time.Second * 5,
-	//})
+func RunHTTPPings(ctx context.Context, configs []PingConfig, runOnce bool, source string) error {
+	c := NewHTTPService(ctx, configs, time.Second * 1, runOnce)
+	c.AddHandler(LoggingHandler{})
+	c.AddHandler(UploadHandler{
+		Source: source,
+		Kind: "http",
+		UploadURL: "https://carbide-datum-276117.wl.r.appspot.com/metric",
+		Timeout:   time.Second * 5,
+	})
 	return c.Start()
 }

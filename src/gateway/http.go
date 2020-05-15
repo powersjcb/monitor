@@ -5,6 +5,10 @@ import (
 	"fmt"
 	"github.com/powersjcb/monitor/src/client"
 	"github.com/powersjcb/monitor/src/server/db"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/api/trace"
+	"go.opentelemetry.io/otel/plugin/othttp"
+	"log"
 	"net/http"
 	"time"
 )
@@ -22,15 +26,26 @@ func NewLogger(handler http.Handler) *Logger {
 	return &Logger{handler}
 }
 
-type HTTPServer struct {
-	q *db.Queries
-	port string
+func NewTracer(handler http.Handler, tracer trace.Tracer)  http.Handler {
+	return othttp.NewHandler(handler, "server", othttp.WithTracer(tracer))
 }
 
-func NewHTTPServer(q *db.Queries, port string) HTTPServer {
+type HTTPServer struct {
+	appContext *ApplicationContext
+	port string
+	q *db.Queries
+}
+
+type ApplicationContext struct {
+	Tracer otel.Tracer
+	Logger log.Logger
+}
+
+func NewHTTPServer(appContext *ApplicationContext, q *db.Queries, port string) HTTPServer {
 	return HTTPServer{
-		q: q,
+		appContext: appContext,
 		port: port,
+		q: q,
 	}
 }
 
@@ -41,7 +56,7 @@ func (s *HTTPServer) Start() error {
 	serverMux.HandleFunc("/status", s.Status)
 	server := &http.Server{
 		Addr: "0.0.0.0:" + s.port,
-		Handler: NewLogger(serverMux),
+		Handler: NewTracer(NewLogger(serverMux), s.appContext.Tracer),
 		ReadTimeout: 30 * time.Second,
 		WriteTimeout: 30 * time.Second,
 	}
@@ -76,7 +91,7 @@ func (s HTTPServer) Metric(rw http.ResponseWriter, r *http.Request) {
 }
 
 func (s HTTPServer) Ping(rw http.ResponseWriter, r *http.Request) {
-	err := client.RunHTTPPings(client.DefaultPingConfigs, true, r.Host)
+	err := client.RunHTTPPings(r.Context(), client.DefaultPingConfigs, true, r.Host)
 	if err != nil {
 		fmt.Printf("failed to run pings", err.Error())
 		rw.WriteHeader(500)

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/powersjcb/monitor/src/lib/dns"
+	"go.opentelemetry.io/otel/plugin/httptrace"
 	"golang.org/x/net/icmp"
 	"net"
 	"net/http"
@@ -13,6 +14,7 @@ import (
 	"time"
 )
 type HTTPService struct {
+	ctx context.Context
 	mux sync.Mutex
 	conn *icmp.PacketConn
 	dnsEntries map[string]net.IP
@@ -24,11 +26,12 @@ type HTTPService struct {
 	Timeout time.Duration
 }
 
-func NewHTTPService(targets []PingConfig, timeout time.Duration, runOnce bool) HTTPService {
+func NewHTTPService(ctx context.Context, targets []PingConfig, timeout time.Duration, runOnce bool) HTTPService {
 	if timeout < 1 * time.Millisecond {
 		panic("timeout too small: " + string(timeout))
 	}
 	return HTTPService{
+		ctx:     		ctx,
 		mux:            sync.Mutex{},
 		dnsEntries:     make(map[string]net.IP),
 		RunOnce: 		runOnce,
@@ -78,7 +81,6 @@ func (s *HTTPService) send(target PingConfig) (PingResult, error) {
 	res := PingResult{
 		Target: target.URL,
 	}
-
 	ip, err := s.dnsLookup(target.URL)
 	if err != nil {
 		return res, err
@@ -90,7 +92,7 @@ func (s *HTTPService) send(target PingConfig) (PingResult, error) {
 	}
 
 	t := time.Now()
-	_, err = get(u, ip, s.Timeout)
+	_, err = get(s.ctx, u, ip, s.Timeout)
 	if err != nil {
 		return res, err
 	}
@@ -134,7 +136,7 @@ func ensureHTTP(urlString string) (string, error) {
 }
 
 // we want to measure latency without dns lookup
-func get(urlString string, cachedIP net.IP, timeout time.Duration) (resp *http.Response, err error) {
+func get(ctx context.Context, urlString string, cachedIP net.IP, timeout time.Duration) (resp *http.Response, err error) {
 	dialer := &net.Dialer{
 		Timeout:   timeout,
 	}
@@ -162,5 +164,15 @@ func get(urlString string, cachedIP net.IP, timeout time.Duration) (resp *http.R
 			return http.ErrUseLastResponse
 		},
 	}
-	return c.Head(urlString)
+	req, err := http.NewRequestWithContext(ctx, "HEAD", urlString, nil)
+	if err != nil {
+		return nil, err
+	}
+	ctx, req =httptrace.W3C(ctx, req)
+	httptrace.Inject(ctx, req)
+
+
+	res, err := c.Do(req)
+	defer res.Body.Close()
+	return res, err
 }
