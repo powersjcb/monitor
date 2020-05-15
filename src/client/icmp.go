@@ -30,12 +30,12 @@ type PingResult struct {
 }
 
 type ResultHandler interface {
-	Handle(result PingResult, e error) error
+	Handle(ctx context.Context, result PingResult, e error) error
 }
 
 type LoggingHandler struct {}
 
-func (LoggingHandler) Handle(r PingResult, err error) error {
+func (LoggingHandler) Handle(_ context.Context, r PingResult, err error) error {
 	if err != nil {
 		fmt.Printf("failed for target %s: %s", r.Target, err.Error())
 	} else {
@@ -45,6 +45,7 @@ func (LoggingHandler) Handle(r PingResult, err error) error {
 }
 
 type PingService struct {
+	ctx context.Context
 	mux sync.Mutex
 	conn *icmp.PacketConn
 	dnsEntries map[string]net.IP
@@ -56,7 +57,7 @@ type PingService struct {
 	Timeout time.Duration
 }
 
-func NewService(targets []PingConfig, timeout time.Duration, runOnce bool) PingService {
+func NewService(ctx context.Context, targets []PingConfig, timeout time.Duration, runOnce bool) PingService {
 	if timeout < 1 * time.Millisecond {
 		panic("timeout too small: " + string(timeout))
 	}
@@ -244,7 +245,7 @@ func (c *PingService) listen(wg *sync.WaitGroup) error {
 
 func (c *PingService) evalHandlers(r PingResult, err error) error {
 	for _, h := range c.ResultHandlers {
-		e := h.Handle(r, err)
+		e := h.Handle(c.ctx, r, err)
 		if e != nil {
 			return errors.New("handler failed: " + e.Error() + err.Error())
 		}

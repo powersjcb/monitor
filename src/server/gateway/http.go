@@ -55,9 +55,9 @@ func (s *HTTPServer) Start() error {
 	serverMux.HandleFunc("/pings", s.Ping)
 	serverMux.HandleFunc("/status", s.Status)
 	server := &http.Server{
-		Addr: "0.0.0.0:" + s.port,
-		Handler: NewTracer(NewLogger(serverMux), s.appContext.Tracer),
-		ReadTimeout: 30 * time.Second,
+		Addr:         "0.0.0.0:" + s.port,
+		Handler:      NewTracer(NewLogger(serverMux), s.appContext.Tracer),
+		ReadTimeout:  30 * time.Second,
 		WriteTimeout: 30 * time.Second,
 	}
 

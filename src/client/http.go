@@ -69,7 +69,7 @@ func (s *HTTPService) Start() error {
 
 func (s *HTTPService) evalHandlers(r PingResult, err error) error {
 	for _, h := range s.ResultHandlers {
-		e := h.Handle(r, err)
+		e := h.Handle(s.ctx, r, err)
 		if e != nil {
 			return errors.New("handler failed: " + e.Error() + err.Error())
 		}
@@ -168,7 +168,7 @@ func get(ctx context.Context, urlString string, cachedIP net.IP, timeout time.Du
 	if err != nil {
 		return nil, err
 	}
-	ctx, req =httptrace.W3C(ctx, req)
+	ctx, req = httptrace.W3C(ctx, req)
 	httptrace.Inject(ctx, req)
 
 

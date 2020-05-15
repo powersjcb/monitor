@@ -4,10 +4,10 @@ import (
 	"context"
 	"database/sql"
 	_ "github.com/lib/pq"
-	"github.com/powersjcb/monitor/src/gateway"
 	"github.com/powersjcb/monitor/src/lib/tracer"
 	"github.com/powersjcb/monitor/src/server"
 	"github.com/powersjcb/monitor/src/server/db"
+	"github.com/powersjcb/monitor/src/server/gateway"
 	"go.opentelemetry.io/otel/api/global"
 	"log"
 )

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"github.com/jackpal/gateway"
@@ -25,7 +26,8 @@ func main() {
 		fmt.Printf("unable to discover default gateway: %s", err.Error())
 	}
 	h, _ := os.Hostname()
-	err = client.RunPings(pingConfigs, *runOnce, h)
+	ctx := context.Background()
+	err = client.RunPings(ctx, pingConfigs, *runOnce, h)
 	if err != nil {
 		log.Fatal(err)
 	}
