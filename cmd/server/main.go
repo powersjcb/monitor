@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	_ "github.com/lib/pq"
 	"github.com/powersjcb/monitor/src/lib/tracer"
 	"github.com/powersjcb/monitor/src/server"
@@ -18,7 +17,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-	conn, err := sql.Open("postgres", c.Database)
+	conn, err := tracer.OpenDB(c.Database)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
