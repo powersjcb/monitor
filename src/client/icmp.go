@@ -62,6 +62,7 @@ func NewService(ctx context.Context, targets []PingConfig, timeout time.Duration
 		panic("timeout too small: " + string(timeout))
 	}
 	return PingService{
+		ctx: 			ctx,
 		mux:            sync.Mutex{},
 		conn:           nil,
 		dnsEntries:     make(map[string]net.IP),

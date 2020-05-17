@@ -4,10 +4,13 @@ import (
 	"context"
 	"database/sql"
 	"database/sql/driver"
+	"fmt"
 	"github.com/lib/pq"
 	"github.com/ngrok/sqlmw"
 	"go.opentelemetry.io/otel/api/kv"
 	"go.opentelemetry.io/otel/api/trace"
+	"runtime"
+	"strings"
 )
 
 func OpenDB(dsn string) (*sql.DB, error) {
@@ -24,7 +27,7 @@ type sqlInterceptor struct {
 func (sqlInterceptor) ConnExecContext(ctx context.Context, conn driver.ExecerContext, query string, args []driver.NamedValue) (driver.Result, error) {
 	span := trace.SpanFromContext(ctx)
 	// assumes query does not contain any values
-	ctx, dbSpan := span.Tracer().Start(ctx, "postgres-helpfull-query-name", trace.WithSpanKind(trace.SpanKindClient))
+	ctx, dbSpan := span.Tracer().Start(ctx, "postgres-helpful-query-name", trace.WithSpanKind(trace.SpanKindClient))
 	dbSpan.SetAttributes(
 		kv.String("db.kind", "sql"),
 		kv.String("db.instance", ""),
@@ -37,8 +40,12 @@ func (sqlInterceptor) ConnExecContext(ctx context.Context, conn driver.ExecerCon
 
 func (sqlInterceptor) ConnQueryContext(ctx context.Context, conn driver.QueryerContext, query string, args []driver.NamedValue) (driver.Rows, error) {
 	span := trace.SpanFromContext(ctx)
-	// assumes query does not contain any values
-	ctx, dbSpan := span.Tracer().Start(ctx, "postgres-helpfull-query-name", trace.WithSpanKind(trace.SpanKindClient))
+	queryLabel := getCallerName()
+	if queryLabel == "" {
+		queryLabel = "postgres-query"
+	}
+	fmt.Println(queryLabel)
+	ctx, dbSpan := span.Tracer().Start(ctx, queryLabel, trace.WithSpanKind(trace.SpanKindClient))
 	dbSpan.SetAttributes(
 		kv.String("db.kind", "sql"),
 		kv.String("db.instance", ""),
@@ -47,4 +54,35 @@ func (sqlInterceptor) ConnQueryContext(ctx context.Context, conn driver.QueryerC
 	)
 	defer dbSpan.End()
 	return conn.QueryContext(ctx, query, args)
+}
+
+var dbLibs = []string{
+	"com/ngrok/sqlmw",
+	"database/sql",
+	"sqlInterceptor",
+}
+
+// we want to introspect the first caller that is outside of our tracing/database/orm libs
+func getCallerName() string {
+	pc := make([]uintptr, 10)
+	frameCount := runtime.Callers(3, pc)
+	frames := runtime.CallersFrames(pc[:frameCount])
+	frame, more := frames.Next()
+	// find the calling function outside of database/sql and ngrok
+	for more {
+		if frame.Func == nil {
+			return ""
+		}
+		dbLib := false
+		for i := 0; i < len(dbLibs) && !dbLib; i++ {
+			if strings.Contains(frame.Func.Name(), dbLibs[i]) {
+				dbLib = true
+			}
+		}
+		if !dbLib {
+			return frame.Func.Name()
+		}
+		frame, more = frames.Next()
+	}
+	return ""
 }
