@@ -66,7 +66,7 @@ func getCallerName() string {
 	frameCount := runtime.Callers(3, pc)
 	frames := runtime.CallersFrames(pc[:frameCount])
 	frame, more := frames.Next()
-	// find the calling function outside of database/sql and ngrok
+	// find the first calling function outside of database/sql and ngrok
 	for more {
 		if frame.Func == nil {
 			return ""
