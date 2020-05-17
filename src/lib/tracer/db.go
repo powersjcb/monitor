@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"database/sql/driver"
-	"fmt"
 	"github.com/lib/pq"
 	"github.com/ngrok/sqlmw"
 	"go.opentelemetry.io/otel/api/kv"
@@ -44,7 +43,6 @@ func (sqlInterceptor) ConnQueryContext(ctx context.Context, conn driver.QueryerC
 	if queryLabel == "" {
 		queryLabel = "postgres-query"
 	}
-	fmt.Println(queryLabel)
 	ctx, dbSpan := span.Tracer().Start(ctx, queryLabel, trace.WithSpanKind(trace.SpanKindClient))
 	dbSpan.SetAttributes(
 		kv.String("db.kind", "sql"),
