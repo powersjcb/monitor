@@ -26,3 +26,9 @@ variable "zone_char" {
   type        = string
   default     = "a"
 }
+
+variable "domain" {
+  description = "root domain for application"
+  type = string
+  default = "jacobpowers.me"
+}
