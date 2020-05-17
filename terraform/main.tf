@@ -33,7 +33,6 @@ resource "google_app_engine_application" "app" {
   location_id = var.region
 }
 
-// required manual verification by adding using https://search.google.com/search-console/
 resource "google_app_engine_domain_mapping" "domain_mapping" {
   project = var.project_id
   domain_name = "${var.app_name}.${var.domain}"
@@ -41,6 +40,25 @@ resource "google_app_engine_domain_mapping" "domain_mapping" {
   ssl_settings {
     ssl_management_type = "AUTOMATIC"
   }
+}
+
+resource "google_dns_managed_zone" "public" {
+  project      = var.project_id
+
+  dns_name    = "${var.domain}."
+  description = var.domain
+  name        = "public-zone"
+}
+
+// this requires setting up the glcoud provider account email that terraform is using (not default)
+resource "google_dns_record_set" "app_cname" {
+  project = var.project_id
+
+  managed_zone = google_dns_managed_zone.public.name
+  name = "monitor.jacobpowers.me."
+  rrdatas = ["ghs.googlehosted.com."]
+  ttl = 60
+  type = "CNAME"
 }
 
 resource "google_app_engine_firewall_rule" "rule" {
@@ -152,23 +170,4 @@ resource "google_secret_manager_secret_iam_member" "app_engine_hc_api_key" {
   secret_id = google_secret_manager_secret.hc_api_key.id
   role = "roles/secretmanager.secretAccessor"
   member = "serviceAccount:${google_service_account.app_engine.email}"
-}
-
-resource "google_dns_managed_zone" "public" {
-  project      = var.project_id
-
-  dns_name    = "${var.domain}."
-  description = var.domain
-  name        = "public-zone"
-}
-
-// this requires setting up the glcoud provider account email that terraform is using (not default)
-resource "google_dns_record_set" "app_cname" {
-  project = var.project_id
-
-  managed_zone = google_dns_managed_zone.public.name
-  name = "monitor.jacobpowers.me."
-  rrdatas = ["ghs.googlehosted.com."]
-  ttl = 60
-  type = "CNAME"
 }
