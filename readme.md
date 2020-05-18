@@ -31,3 +31,6 @@ Code generation for database queries requires `sqlc`
 Setup
 - `$ brew install postgresql`
 - `$ brew services restart postgresql`
+- `$ brew install vektra/tap/mockery`
+- `$ brew upgrade mockery`
+

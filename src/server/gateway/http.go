@@ -33,7 +33,7 @@ func NewTracer(handler http.Handler, tracer trace.Tracer)  http.Handler {
 type HTTPServer struct {
 	appContext *ApplicationContext
 	port string
-	q *db.Queries
+	q db.Querier
 }
 
 type ApplicationContext struct {
@@ -41,7 +41,10 @@ type ApplicationContext struct {
 	Logger log.Logger
 }
 
-func NewHTTPServer(appContext *ApplicationContext, q *db.Queries, port string) HTTPServer {
+func NewHTTPServer(appContext *ApplicationContext, q db.Querier, port string) HTTPServer {
+	if q == nil {
+		panic("no db.Querier")
+	}
 	return HTTPServer{
 		appContext: appContext,
 		port: port,
@@ -77,14 +80,14 @@ func (s HTTPServer) Metric(rw http.ResponseWriter, r *http.Request) {
 	var m db.InsertMetricParams
 	err := json.NewDecoder(r.Body).Decode(&m)
 	if err != nil {
-		fmt.Printf(err.Error())
+		fmt.Println(err.Error())
 		rw.WriteHeader(500)
 		return
 	}
 
 	_, err = s.q.InsertMetric(r.Context(), m)
 	if err != nil {
-		fmt.Printf(err.Error())
+		fmt.Println(err.Error())
 		rw.WriteHeader(500)
 		return
 	}
@@ -93,7 +96,7 @@ func (s HTTPServer) Metric(rw http.ResponseWriter, r *http.Request) {
 func (s HTTPServer) Ping(rw http.ResponseWriter, r *http.Request) {
 	err := client.RunHTTPPings(r.Context(), client.DefaultPingConfigs, true, r.Host)
 	if err != nil {
-		fmt.Printf("failed to run pings", err.Error())
+		fmt.Printf("failed to run pings: %s", err.Error())
 		rw.WriteHeader(500)
 		return
 	}
