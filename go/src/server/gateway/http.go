@@ -3,8 +3,8 @@ package gateway
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/powersjcb/monitor/src/client"
-	"github.com/powersjcb/monitor/src/server/db"
+	"github.com/powersjcb/monitor/go/src/client"
+	"github.com/powersjcb/monitor/go/src/server/db"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/api/trace"
 	"go.opentelemetry.io/otel/plugin/othttp"
@@ -32,8 +32,8 @@ func NewTracer(handler http.Handler, tracer trace.Tracer)  http.Handler {
 
 type HTTPServer struct {
 	appContext *ApplicationContext
-	port string
-	q db.Querier
+	port       string
+	q          db.Querier
 }
 
 type ApplicationContext struct {

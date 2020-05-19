@@ -1,9 +1,9 @@
 package client
 
 type lruData struct {
-	data PingRequest
-	prev *lruData
-	next *lruData
+	data     PingRequest
+	prev     *lruData
+	next     *lruData
 	sentinel bool
 }
 

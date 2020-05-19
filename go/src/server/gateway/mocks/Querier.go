@@ -5,7 +5,7 @@ package mocks
 import (
 	context "context"
 
-	db "github.com/powersjcb/monitor/src/server/db"
+	db "github.com/powersjcb/monitor/go/src/server/db"
 	mock "github.com/stretchr/testify/mock"
 )
 

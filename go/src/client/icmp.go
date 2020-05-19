@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/powersjcb/monitor/src/lib/dns"
+	"github.com/powersjcb/monitor/go/src/lib/dns"
 	"golang.org/x/net/icmp"
 	"golang.org/x/net/ipv4"
 	"math/rand"
@@ -45,16 +45,16 @@ func (LoggingHandler) Handle(_ context.Context, r PingResult, err error) error {
 }
 
 type PingService struct {
-	ctx context.Context
-	mux sync.Mutex
-	conn *icmp.PacketConn
-	dnsEntries map[string]net.IP
-	RunOnce bool
+	ctx            context.Context
+	mux            sync.Mutex
+	conn           *icmp.PacketConn
+	dnsEntries     map[string]net.IP
+	RunOnce        bool
 	ResultHandlers []ResultHandler
-	resultsCount uint64
-	Inflight LRU
-	Targets []PingConfig
-	Timeout time.Duration
+	resultsCount   uint64
+	Inflight       LRU
+	Targets        []PingConfig
+	Timeout        time.Duration
 }
 
 func NewService(ctx context.Context, targets []PingConfig, timeout time.Duration, runOnce bool) PingService {
@@ -62,11 +62,11 @@ func NewService(ctx context.Context, targets []PingConfig, timeout time.Duration
 		panic("timeout too small: " + string(timeout))
 	}
 	return PingService{
-		ctx: 			ctx,
+		ctx:            ctx,
 		mux:            sync.Mutex{},
 		conn:           nil,
 		dnsEntries:     make(map[string]net.IP),
-		RunOnce: 		runOnce,
+		RunOnce:        runOnce,
 		resultsCount:   0,
 		ResultHandlers: nil,
 		Inflight:       NewLRU(25),
@@ -150,8 +150,8 @@ func (c *PingService) sendRequest(host string) error {
 	}
 	c.mux.Lock()
 	c.Inflight.Add(PingRequest{
-		ID: PingID(msgID),
-		Seq: 0,
+		ID:     PingID(msgID),
+		Seq:    0,
 		Target: host,
 		SentAt: s,
 	})

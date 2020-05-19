@@ -1,7 +1,7 @@
 package client_test
 
 import (
-	"github.com/powersjcb/monitor/src/client"
+	"github.com/powersjcb/monitor/go/src/client"
 	"testing"
 	"time"
 )

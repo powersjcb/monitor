@@ -5,7 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/jackpal/gateway"
-	"github.com/powersjcb/monitor/src/client"
+	"github.com/powersjcb/monitor/go/src/client"
 	"log"
 	"os"
 	"strings"

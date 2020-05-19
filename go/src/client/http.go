@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/powersjcb/monitor/src/lib/dns"
+	"github.com/powersjcb/monitor/go/src/lib/dns"
 	"go.opentelemetry.io/otel/plugin/httptrace"
 	"golang.org/x/net/icmp"
 	"net"
@@ -14,16 +14,16 @@ import (
 	"time"
 )
 type HTTPService struct {
-	ctx context.Context
-	mux sync.Mutex
-	conn *icmp.PacketConn
-	dnsEntries map[string]net.IP
-	RunOnce bool
+	ctx            context.Context
+	mux            sync.Mutex
+	conn           *icmp.PacketConn
+	dnsEntries     map[string]net.IP
+	RunOnce        bool
 	ResultHandlers []ResultHandler
-	resultsCount uint64
-	Inflight LRU
-	Targets []PingConfig
-	Timeout time.Duration
+	resultsCount   uint64
+	Inflight       LRU
+	Targets        []PingConfig
+	Timeout        time.Duration
 }
 
 func NewHTTPService(ctx context.Context, targets []PingConfig, timeout time.Duration, runOnce bool) HTTPService {

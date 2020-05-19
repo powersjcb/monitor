@@ -6,8 +6,8 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"github.com/powersjcb/monitor/src/lib/httpclient"
-	"github.com/powersjcb/monitor/src/server/db"
+	"github.com/powersjcb/monitor/go/src/lib/httpclient"
+	"github.com/powersjcb/monitor/go/src/server/db"
 	"google.golang.org/api/googleapi"
 	"time"
 )
@@ -20,10 +20,10 @@ type PingConfig struct {
 
 // uploads the data to server
 type UploadHandler struct {
-	HTTP 	  httpclient.Client
-	Kind 	  string
+	HTTP      httpclient.Client
+	Kind      string
 	UploadURL string
-	Source 	  string
+	Source    string
 }
 
 func (h UploadHandler) Handle(ctx context.Context, result PingResult, err error) error {
@@ -49,9 +49,9 @@ func RunPings(ctx context.Context, configs []PingConfig, runOnce bool, source st
 	c := NewService(ctx, configs, time.Second * 10, runOnce)
 	c.AddHandler(LoggingHandler{})
 	c.AddHandler(UploadHandler{
-		HTTP:   httpclient.New(5 * time.Second),
-		Source: source,
-		Kind: "icmp",
+		HTTP:      httpclient.New(5 * time.Second),
+		Source:    source,
+		Kind:      "icmp",
 		UploadURL: "http://127.0.0.1:8080/metric",
 	})
 	return c.Start()
@@ -61,9 +61,9 @@ func RunHTTPPings(ctx context.Context, configs []PingConfig, runOnce bool, sourc
 	c := NewHTTPService(ctx, configs, time.Second * 1, runOnce)
 	c.AddHandler(LoggingHandler{})
 	c.AddHandler(UploadHandler{
-		HTTP: httpclient.New(5 * time.Second),
-		Source: source,
-		Kind: "http",
+		HTTP:      httpclient.New(5 * time.Second),
+		Source:    source,
+		Kind:      "http",
 		UploadURL: "https://carbide-datum-276117.wl.r.appspot.com/metric",
 	})
 	return c.Start()

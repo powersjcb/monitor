@@ -3,10 +3,10 @@ package main
 import (
 	"context"
 	_ "github.com/lib/pq"
-	"github.com/powersjcb/monitor/src/lib/tracer"
-	"github.com/powersjcb/monitor/src/server"
-	"github.com/powersjcb/monitor/src/server/db"
-	"github.com/powersjcb/monitor/src/server/gateway"
+	"github.com/powersjcb/monitor/go/src/lib/tracer"
+	"github.com/powersjcb/monitor/go/src/server"
+	"github.com/powersjcb/monitor/go/src/server/db"
+	"github.com/powersjcb/monitor/go/src/server/gateway"
 	"go.opentelemetry.io/otel/api/global"
 	"log"
 )
