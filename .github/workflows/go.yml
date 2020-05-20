@@ -31,7 +31,8 @@ jobs:
         fi
 
     - name: Build
-      run: go build -v .
+      run: go build -v ./go/cmd/server/main.go
+      run: go build -v ./go/cmd/client/main.go
 
     - name: Test
-      run: go test -v .
+      run: go test -v ./...
