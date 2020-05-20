@@ -80,6 +80,7 @@ func (s *HTTPService) evalHandlers(r PingResult, err error) error {
 func (s *HTTPService) send(target PingConfig) (PingResult, error) {
 	res := PingResult{
 		Target: target.URL,
+		Timestamp: time.Now(),
 	}
 	ip, err := s.dnsLookup(target.URL)
 	if err != nil {
