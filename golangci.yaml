@@ -1,3 +1,0 @@
-service:
-  golangci-lint-version: 1.21.0 # Keep this in sync with .circleci/config.yml and Jenkinsfile.pr
-
