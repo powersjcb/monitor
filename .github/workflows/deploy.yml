@@ -20,6 +20,8 @@ jobs:
           service_account_key: ${{ secrets.GCLOUD_DEPLOY_KEY_DATA }}
 
       # Deploy App to App Engine
-      - name: Deploy
-        run: |
-          gcloud app deploy
+      - name: Deploy App
+        run: gcloud app deploy app.yaml -q
+
+      - name: Deploy cron
+        run: gcloud app deploy cron.yaml -q
