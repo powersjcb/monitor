@@ -24,8 +24,8 @@ type PingRequest struct {
 
 // todo return information about success/failure
 type PingResult struct {
-	Target string
-	Duration time.Duration
+	Target    string
+	Duration  time.Duration
 	Timestamp time.Time
 }
 
@@ -33,7 +33,7 @@ type ResultHandler interface {
 	Handle(ctx context.Context, result PingResult, e error) error
 }
 
-type LoggingHandler struct {}
+type LoggingHandler struct{}
 
 func (LoggingHandler) Handle(_ context.Context, r PingResult, err error) error {
 	if err != nil {
@@ -58,7 +58,7 @@ type PingService struct {
 }
 
 func NewService(ctx context.Context, targets []PingConfig, timeout time.Duration, runOnce bool) PingService {
-	if timeout < 1 * time.Millisecond {
+	if timeout < 1*time.Millisecond {
 		panic("timeout too small: " + string(timeout))
 	}
 	return PingService{
@@ -114,12 +114,12 @@ func (c *PingService) dnsLookup(host string) (net.IP, error) {
 }
 
 func (c *PingService) sendRequest(host string) error {
-	msgID := rand.Intn(1 << 15 + 1)
+	msgID := rand.Intn(1<<15 + 1)
 	m := icmp.Message{
 		Type:     ipv4.ICMPTypeEcho,
 		Code:     0,
 		Checksum: 0, // checksum populated by Marshal func
-		Body:     &icmp.Echo{
+		Body: &icmp.Echo{
 			ID:   msgID, // 16bit number
 			Seq:  0,
 			Data: nil,
@@ -274,7 +274,7 @@ func (c *PingService) Start() error {
 		// spawn a ticker for each config
 		p := target.Period
 		url := target.URL
-		go func () {
+		go func() {
 			startupWg.Wait()
 			if c.RunOnce {
 				err := c.sendRequest(url)

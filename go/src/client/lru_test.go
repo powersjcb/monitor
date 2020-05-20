@@ -14,10 +14,10 @@ var r1 = client.PingRequest{
 }
 
 var r2 = client.PingRequest{
-ID:     543,
-Seq:    0,
-Target: "192.168.1.1",
-SentAt: time.Now(),
+	ID:     543,
+	Seq:    0,
+	Target: "192.168.1.1",
+	SentAt: time.Now(),
 }
 
 func TestLRU_Add(t *testing.T) {

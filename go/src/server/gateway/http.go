@@ -26,7 +26,7 @@ func NewLogger(handler http.Handler) *Logger {
 	return &Logger{handler}
 }
 
-func NewTracer(handler http.Handler, tracer trace.Tracer)  http.Handler {
+func NewTracer(handler http.Handler, tracer trace.Tracer) http.Handler {
 	return othttp.NewHandler(handler, "server", othttp.WithTracer(tracer))
 }
 
@@ -47,8 +47,8 @@ func NewHTTPServer(appContext *ApplicationContext, q db.Querier, port string) HT
 	}
 	return HTTPServer{
 		appContext: appContext,
-		port: port,
-		q: q,
+		port:       port,
+		q:          q,
 	}
 }
 
@@ -72,7 +72,7 @@ func (s *HTTPServer) Start() error {
 	return nil
 }
 
-func(s HTTPServer) Status(rw http.ResponseWriter, r *http.Request) {
+func (s HTTPServer) Status(rw http.ResponseWriter, r *http.Request) {
 	_, _ = rw.Write([]byte("ok"))
 }
 

@@ -10,7 +10,7 @@ type lruData struct {
 type LRU struct {
 	head *lruData
 	tail *lruData
-	m map[PingID]*lruData
+	m    map[PingID]*lruData
 	size int
 }
 
@@ -24,7 +24,7 @@ func NewLRU(size int) LRU {
 		size: size,
 		head: h,
 		tail: t,
-		m: make(map[PingID]*lruData),
+		m:    make(map[PingID]*lruData),
 	}
 }
 

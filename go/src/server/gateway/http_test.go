@@ -35,16 +35,16 @@ func TestHTTPServer_Metric_EmptyPost(t *testing.T) {
 func TestHTTPServer_Metric_Valid(t *testing.T) {
 	s, q := server()
 	metricParams := db.InsertMetricParams{
-		Ts:     sql.NullTime{
-			Time: time.Now(),
+		Ts: sql.NullTime{
+			Time:  time.Now(),
 			Valid: true,
 		},
 		Source: "ping",
 		Name:   "test",
 		Target: "test-target",
-		Value:  sql.NullFloat64{
+		Value: sql.NullFloat64{
 			Float64: 1.0001,
-			Valid: true,
+			Valid:   true,
 		},
 	}
 
@@ -56,7 +56,6 @@ func TestHTTPServer_Metric_Valid(t *testing.T) {
 		Target:     metricParams.Target,
 		Value:      metricParams.Value,
 	}
-
 
 	data, err := json.Marshal(metricParams)
 	if err != nil {

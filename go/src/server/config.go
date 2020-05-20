@@ -11,8 +11,9 @@ import (
 	secretmanager "cloud.google.com/go/secretmanager/apiv1"
 	secretmanagerpb "google.golang.org/genproto/googleapis/cloud/secretmanager/v1"
 )
+
 type Config struct {
-	Port string
+	Port     string
 	Database string
 	HCAPIKey string
 }

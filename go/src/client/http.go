@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 )
+
 type HTTPService struct {
 	ctx            context.Context
 	mux            sync.Mutex
@@ -27,14 +28,14 @@ type HTTPService struct {
 }
 
 func NewHTTPService(ctx context.Context, targets []PingConfig, timeout time.Duration, runOnce bool) HTTPService {
-	if timeout < 1 * time.Millisecond {
+	if timeout < 1*time.Millisecond {
 		panic("timeout too small: " + string(timeout))
 	}
 	return HTTPService{
-		ctx:     		ctx,
+		ctx:            ctx,
 		mux:            sync.Mutex{},
 		dnsEntries:     make(map[string]net.IP),
-		RunOnce: 		runOnce,
+		RunOnce:        runOnce,
 		ResultHandlers: nil,
 		Targets:        targets,
 		Timeout:        timeout,
@@ -79,7 +80,7 @@ func (s *HTTPService) evalHandlers(r PingResult, err error) error {
 
 func (s *HTTPService) send(target PingConfig) (PingResult, error) {
 	res := PingResult{
-		Target: target.URL,
+		Target:    target.URL,
 		Timestamp: time.Now(),
 	}
 	ip, err := s.dnsLookup(target.URL)
@@ -139,7 +140,7 @@ func ensureHTTP(urlString string) (string, error) {
 // we want to measure latency without dns lookup
 func get(ctx context.Context, urlString string, cachedIP net.IP, timeout time.Duration) (resp *http.Response, err error) {
 	dialer := &net.Dialer{
-		Timeout:   timeout,
+		Timeout: timeout,
 	}
 
 	formattedIP := cachedIP.String()
@@ -151,8 +152,8 @@ func get(ctx context.Context, urlString string, cachedIP net.IP, timeout time.Du
 	// Create a transport like http.DefaultTransport, but with a specified localAddr
 	transport := &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
-		DialContext: 		   func (ctx context.Context, network, _ string) (net.Conn, error) {
-			return dialer.DialContext(ctx, network, formattedIP + ":80")
+		DialContext: func(ctx context.Context, network, _ string) (net.Conn, error) {
+			return dialer.DialContext(ctx, network, formattedIP+":80")
 		},
 		MaxIdleConns:          100,
 		IdleConnTimeout:       timeout,
@@ -171,7 +172,6 @@ func get(ctx context.Context, urlString string, cachedIP net.IP, timeout time.Du
 	}
 	ctx, req = httptrace.W3C(ctx, req)
 	httptrace.Inject(ctx, req)
-
 
 	res, err := c.Do(req)
 	defer res.Body.Close()

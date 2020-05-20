@@ -36,8 +36,8 @@ func (c *Client) PostWithContext(ctx context.Context, url, contentType string, b
 
 func New(timeout time.Duration) Client {
 	return Client{
-		client:  &http.Client{
-			Timeout:       timeout,
+		client: &http.Client{
+			Timeout: timeout,
 		},
 	}
 }

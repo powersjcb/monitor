@@ -13,8 +13,8 @@ import (
 )
 
 type PingConfig struct {
-	Name string
-	URL string
+	Name   string
+	URL    string
 	Period time.Duration
 }
 
@@ -46,7 +46,7 @@ func (h UploadHandler) Handle(ctx context.Context, result PingResult, err error)
 }
 
 func RunPings(ctx context.Context, configs []PingConfig, runOnce bool, source string) error {
-	c := NewService(ctx, configs, time.Second * 10, runOnce)
+	c := NewService(ctx, configs, time.Second*10, runOnce)
 	c.AddHandler(LoggingHandler{})
 	c.AddHandler(UploadHandler{
 		HTTP:      httpclient.New(5 * time.Second),
@@ -58,7 +58,7 @@ func RunPings(ctx context.Context, configs []PingConfig, runOnce bool, source st
 }
 
 func RunHTTPPings(ctx context.Context, configs []PingConfig, runOnce bool, source string) error {
-	c := NewHTTPService(ctx, configs, time.Second * 1, runOnce)
+	c := NewHTTPService(ctx, configs, time.Second*1, runOnce)
 	c.AddHandler(LoggingHandler{})
 	c.AddHandler(UploadHandler{
 		HTTP:      httpclient.New(5 * time.Second),
