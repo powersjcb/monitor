@@ -30,9 +30,11 @@ jobs:
             dep ensure
         fi
 
-    - name: Build
+    - name: Build Server
       run: go build -v ./go/cmd/server/main.go
-      run: go build -v ./go/cmd/client/main.go
 
+    - name: Build Client
+      run: go build -v ./go/cmd/client/main.go
+      
     - name: Test
       run: go test -v ./...
