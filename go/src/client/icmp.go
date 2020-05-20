@@ -105,7 +105,7 @@ func (c *PingService) dnsLookup(host string) (net.IP, error) {
 	}
 
 	if len(ips) == 0 {
-		return nil, errors.New(fmt.Sprintf("empty list of ips for : %s", host))
+		return nil, fmt.Errorf("empty list of ips for : %s", host)
 	}
 	c.mux.Lock()
 	c.dnsEntries[host] = ips[0].IP
@@ -178,7 +178,7 @@ func (c *PingService) nextICMP() (*icmp.Echo, error) {
 	rb := make([]byte, 1500)
 	respSize, _, err := c.conn.ReadFrom(rb)
 	if err != nil {
-		return nil, errors.New(fmt.Sprintf("connection error: %s", err.Error()))
+		return nil, fmt.Errorf("connection error: %s", err.Error())
 	}
 	resp, err := icmp.ParseMessage(ipv4.ICMPTypeEcho.Protocol(), rb[:respSize])
 	if err != nil {
@@ -196,7 +196,7 @@ func (c *PingService) nextICMP() (*icmp.Echo, error) {
 
 func (c *PingService) listen(wg *sync.WaitGroup) error {
 	wg.Done()
-	for true {
+	for {
 		icmpMessage, err := c.nextICMP()
 		if err != nil {
 			err = c.evalHandlers(PingResult{}, err)
@@ -241,7 +241,6 @@ func (c *PingService) listen(wg *sync.WaitGroup) error {
 			}
 		}
 	}
-	return nil
 }
 
 func (c *PingService) evalHandlers(r PingResult, err error) error {
@@ -283,7 +282,7 @@ func (c *PingService) Start() error {
 				}
 			} else {
 				ticker := time.NewTicker(p)
-				for _ = range ticker.C {
+				for range ticker.C {
 					err := c.sendRequest(url)
 					if err != nil {
 						fmt.Println(err.Error())

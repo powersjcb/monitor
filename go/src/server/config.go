@@ -25,7 +25,7 @@ func GetConfig(ctx context.Context) (Config, error) {
 		return c, err
 	}
 
-	port, err := getPort(nil)
+	port, err := getPort(ctx)
 	c.Port = port
 	if err != nil {
 		return c, err
@@ -86,7 +86,7 @@ func getSecretValue(ctx context.Context, sc *secretmanager.Client, key string) (
 		return "", err
 	}
 	data := res.Payload.GetData()
-	if data == nil || len(data) == 0 {
+	if len(data) == 0 {
 		return "", errors.New("no secret found for key: " + key)
 	}
 	return string(data), nil

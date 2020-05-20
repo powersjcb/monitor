@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/powersjcb/monitor/go/src/lib/dns"
 	"go.opentelemetry.io/otel/plugin/httptrace"
-	"golang.org/x/net/icmp"
+	"google.golang.org/api/googleapi"
 	"net"
 	"net/http"
 	"net/url"
@@ -17,11 +17,9 @@ import (
 type HTTPService struct {
 	ctx            context.Context
 	mux            sync.Mutex
-	conn           *icmp.PacketConn
 	dnsEntries     map[string]net.IP
 	RunOnce        bool
 	ResultHandlers []ResultHandler
-	resultsCount   uint64
 	Inflight       LRU
 	Targets        []PingConfig
 	Timeout        time.Duration
@@ -49,23 +47,23 @@ func (s *HTTPService) AddHandler(handler ResultHandler) {
 }
 
 func (s *HTTPService) Start() error {
-	for true {
+	for {
 		for _, target := range s.Targets {
 			if s.RunOnce {
 				res, err := s.send(target)
 				err = s.evalHandlers(res, err)
 				if err != nil {
-					fmt.Printf(err.Error())
+					fmt.Println(err.Error())
 				}
 			} else {
 				// add ticker
+				return errors.New("not implemented error: runOnce == false")
 			}
 		}
 		if s.RunOnce {
 			return nil
 		}
 	}
-	return nil
 }
 
 func (s *HTTPService) evalHandlers(r PingResult, err error) error {
@@ -98,7 +96,7 @@ func (s *HTTPService) send(target PingConfig) (PingResult, error) {
 	if err != nil {
 		return res, err
 	}
-	res.Duration = time.Now().Sub(t)
+	res.Duration = time.Since(t)
 	return res, nil
 }
 
@@ -118,7 +116,7 @@ func (s *HTTPService) dnsLookup(host string) (net.IP, error) {
 	}
 
 	if len(ips) == 0 {
-		return nil, errors.New(fmt.Sprintf("empty list of ips for : %s", host))
+		return nil, fmt.Errorf("empty list of ips for : %s", host)
 	}
 	s.mux.Lock()
 	s.dnsEntries[host] = ips[0].IP
@@ -174,6 +172,6 @@ func get(ctx context.Context, urlString string, cachedIP net.IP, timeout time.Du
 	httptrace.Inject(ctx, req)
 
 	res, err := c.Do(req)
-	defer res.Body.Close()
+	defer googleapi.CloseBody(res)
 	return res, err
 }

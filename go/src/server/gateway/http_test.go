@@ -69,6 +69,6 @@ func TestHTTPServer_Metric_Valid(t *testing.T) {
 	s.Metric(w, r)
 
 	if w.Code != 200 {
-		t.Errorf("unable to insert metric: %d, %s", w.Code, string(w.Body.Bytes()))
+		t.Errorf("unable to insert metric: %d, %s", w.Code, w.Body.String())
 	}
 }

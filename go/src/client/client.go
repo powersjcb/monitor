@@ -26,7 +26,10 @@ type UploadHandler struct {
 	Source    string
 }
 
-func (h UploadHandler) Handle(ctx context.Context, result PingResult, err error) error {
+func (h UploadHandler) Handle(ctx context.Context, result PingResult, e error) error {
+	if e != nil {
+		fmt.Println("failed to get a result")
+	}
 	body, err := json.Marshal(&db.InsertMetricParams{
 		Ts:     sql.NullTime{Time: result.Timestamp, Valid: true},
 		Source: h.Source, // this computer's hostname
