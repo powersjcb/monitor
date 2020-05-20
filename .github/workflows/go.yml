@@ -35,6 +35,6 @@ jobs:
 
     - name: Build Client
       run: go build -v ./go/cmd/client/main.go
-      
+
     - name: Test
       run: go test -v ./...
