@@ -18,7 +18,7 @@ func OpenDB(dsn string) (*sql.DB, error) {
 	return db, err
 }
 
-type sqlInterceptor struct {}
+type sqlInterceptor struct{}
 
 // ref: https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/trace/semantic_conventions/database.md
 const dbKind = "db.kind"
