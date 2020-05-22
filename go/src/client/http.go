@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/powersjcb/monitor/go/src/lib/dns"
+	"github.com/powersjcb/monitor/go/src/lib/httpclient"
 	"go.opentelemetry.io/otel/plugin/httptrace"
-	"google.golang.org/api/googleapi"
 	"net"
 	"net/http"
 	"net/url"
@@ -172,6 +172,6 @@ func get(ctx context.Context, urlString string, cachedIP net.IP, timeout time.Du
 	httptrace.Inject(ctx, req)
 
 	res, err := c.Do(req)
-	defer googleapi.CloseBody(res)
+	defer httpclient.CloseBody(res)
 	return res, err
 }

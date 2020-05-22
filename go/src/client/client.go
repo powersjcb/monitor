@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"github.com/powersjcb/monitor/go/src/lib/httpclient"
 	"github.com/powersjcb/monitor/go/src/server/db"
-	"google.golang.org/api/googleapi"
 	"time"
 )
 
@@ -44,7 +43,7 @@ func (h UploadHandler) Handle(ctx context.Context, result PingResult, e error) e
 	if err != nil {
 		fmt.Println("failed to upload results", err)
 	}
-	defer googleapi.CloseBody(resp)
+	defer httpclient.CloseBody(resp)
 	return nil
 }
 
