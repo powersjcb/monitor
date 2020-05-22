@@ -7,7 +7,7 @@ COPY /go.sum ./
 RUN go mod download
 
 COPY /go ./go
-RUN go build -o client ./go/cmd/server/main.go
+RUN go build -o client ./go/cmd/client/main.go
 
 FROM balenalib/%%BALENA_MACHINE_NAME%%-debian:stretch
 
