@@ -6,15 +6,19 @@ import (
 	"fmt"
 	"github.com/jackpal/gateway"
 	"github.com/powersjcb/monitor/go/src/client"
+	"github.com/powersjcb/monitor/go/src/lib/tracer"
 	"log"
 	"os"
 	"strings"
 	"time"
 )
 
+const publicTracingKey = "a0f88ec0416dae30766466ab00f0492c"
+
 func main() {
 	runOnce := flag.Bool("once", false, "Run pings only one time.")
 	flag.Parse()
+	tracer.InitTracer(publicTracingKey)
 	pingConfigs := client.DefaultPingConfigs
 	gw, err := gateway.DiscoverGateway()
 	if err == nil && gw != nil && gw.String() != "" {
