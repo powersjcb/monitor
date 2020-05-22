@@ -9,7 +9,7 @@ import (
 )
 
 const getMetricForSource = `-- name: GetMetricForSource :many
-select source, ts, inserted_at, name, target, value
+select source, ts, inserted_at, name, target, value, ip_address, account_id
 from public.metrics
 where source = $1
 `
@@ -30,6 +30,8 @@ func (q *Queries) GetMetricForSource(ctx context.Context, source string) ([]Metr
 			&i.Name,
 			&i.Target,
 			&i.Value,
+			&i.IpAddress,
+			&i.AccountID,
 		); err != nil {
 			return nil, err
 		}
@@ -126,7 +128,7 @@ func (q *Queries) GetMetrics(ctx context.Context) ([]string, error) {
 const insertMetric = `-- name: InsertMetric :one
 INSERT INTO public.metrics (ts, source, name, target, value, inserted_at)
 VALUES ($1, $2, $3, $4, $5, NOW())
-RETURNING source, ts, inserted_at, name, target, value
+RETURNING source, ts, inserted_at, name, target, value, ip_address, account_id
 `
 
 type InsertMetricParams struct {
@@ -153,6 +155,8 @@ func (q *Queries) InsertMetric(ctx context.Context, arg InsertMetricParams) (Met
 		&i.Name,
 		&i.Target,
 		&i.Value,
+		&i.IpAddress,
+		&i.AccountID,
 	)
 	return i, err
 }

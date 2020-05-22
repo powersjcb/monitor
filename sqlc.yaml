@@ -4,6 +4,6 @@ packages:
     emit_json_tags: true
     emit_prepared_queries: false
     emit_interface: true
-    path: "./src/server/db"
-    queries: "./src/server/sql/queries/"
-    schema: "./src/server/sql/migrations/"
+    path: "./go/src/server/db"
+    queries: "./go/src/server/sql/queries/"
+    schema: "./go/src/server/sql/migrations/"

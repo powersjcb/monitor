@@ -4,8 +4,16 @@ package db
 
 import (
 	"database/sql"
+	"net"
 	"time"
 )
+
+type Account struct {
+	ID         int64        `json:"id"`
+	Username   string       `json:"username"`
+	ApiKey     string       `json:"api_key"`
+	InsertedAt sql.NullTime `json:"inserted_at"`
+}
 
 type Metric struct {
 	Source     string          `json:"source"`
@@ -14,4 +22,6 @@ type Metric struct {
 	Name       string          `json:"name"`
 	Target     string          `json:"target"`
 	Value      sql.NullFloat64 `json:"value"`
+	IpAddress  net.IP          `json:"ip_address"`
+	AccountID  sql.NullInt64   `json:"account_id"`
 }
