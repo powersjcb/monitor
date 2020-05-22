@@ -3,6 +3,7 @@ FROM balenalib/%%BALENA_MACHINE_NAME%%-golang:latest-build AS build
 WORKDIR /go/src/github.com/powersjcb/monitor
 
 COPY /go ./go
+RUN go mod tidy
 RUN go build ./go/cmd/server/main.go
 
 FROM balenalib/%%BALENA_MACHINE_NAME%%-debian:stretch
