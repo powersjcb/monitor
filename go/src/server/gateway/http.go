@@ -10,6 +10,7 @@ import (
 	"go.opentelemetry.io/otel/plugin/othttp"
 	"log"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -57,6 +58,7 @@ func (s *HTTPServer) Start() error {
 	serverMux.HandleFunc("/metric", s.Metric)
 	serverMux.HandleFunc("/pings", s.Ping)
 	serverMux.HandleFunc("/status", s.Status)
+	serverMux.HandleFunc("/", s.staticHandler)
 	server := &http.Server{
 		Addr:         "0.0.0.0:" + s.port,
 		Handler:      NewTracer(NewLogger(serverMux), s.appContext.Tracer),
@@ -70,6 +72,25 @@ func (s *HTTPServer) Start() error {
 	}
 
 	return nil
+}
+
+func (s HTTPServer) staticHandler(rw http.ResponseWriter, r *http.Request) {
+	publicDir := "./public"
+	fi, err := os.Stat(publicDir)
+	if err != nil || !fi.IsDir() {
+		return
+	}
+	staticsMap := map[string]string{
+		"": "./public/index.html",
+		"/": "./public/index.html",
+		"/static/index.js": "public/index.js",
+	}
+	static, exists := staticsMap[r.URL.Path]
+	if !exists {
+		rw.WriteHeader(404)
+		return
+	}
+	http.ServeFile(rw, r, static)
 }
 
 func (s HTTPServer) Status(rw http.ResponseWriter, r *http.Request) {
