@@ -7,6 +7,8 @@ import (
 	"log"
 )
 
+const sampleFraction = 0.1
+
 func InitTracer(hcAPIKey string) {
 	exporter, err := honeycomb.NewExporter(
 		honeycomb.Config{APIKey: hcAPIKey},
@@ -17,7 +19,7 @@ func InitTracer(hcAPIKey string) {
 		log.Fatal(err)
 	}
 	tp, err := sdktrace.NewProvider(
-		sdktrace.WithConfig(sdktrace.Config{DefaultSampler: sdktrace.AlwaysSample()}),
+		sdktrace.WithConfig(sdktrace.Config{DefaultSampler: sdktrace.ProbabilitySampler(sampleFraction)}),
 		sdktrace.WithSyncer(exporter),
 	)
 	if err != nil {
