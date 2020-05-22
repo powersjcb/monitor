@@ -34,3 +34,7 @@ Setup
 - `$ brew install vektra/tap/mockery`
 - `$ brew upgrade mockery`
 
+
+# Deploying on Balena
+
+`$ balena build --deviceType raspberrypi3 --arch armv7hf --emulated`

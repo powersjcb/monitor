@@ -55,7 +55,7 @@ func RunPings(ctx context.Context, configs []PingConfig, runOnce bool, source st
 		HTTP:      httpclient.New(5 * time.Second),
 		Source:    source,
 		Kind:      "icmp",
-		UploadURL: "http://127.0.0.1:8080/metric",
+		UploadURL: "https://carbide-datum-276117.wl.r.appspot.com/metric",
 	})
 	return c.Start()
 }
