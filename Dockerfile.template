@@ -5,9 +5,7 @@ WORKDIR /go/src/github.com/powersjcb/monitor
 COPY /go ./go
 COPY /go.mod ./
 COPY /go.sum ./
-
-RUN go mod tidy
-RUN go build ./go/cmd/server/main.go
+RUN go build -o client ./go/cmd/server/main.go
 
 FROM balenalib/%%BALENA_MACHINE_NAME%%-debian:stretch
 
