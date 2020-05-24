@@ -26,9 +26,14 @@ func main() {
 	tracer.InitTracer(c.HCAPIKey)
 	t := global.Tracer("monitor.jacobpowers.me")
 	ac := &gateway.ApplicationContext{
+		Querier: q,
 		Tracer: t,
 	}
-	s := gateway.NewHTTPServer(ac, q, c.Port)
+	jwtConfig := gateway.JWTConfig{
+		PublicKey:  c.JTWPublicKey,
+		PrivateKey: c.JTWPrivateKey,
+	}
+	s := gateway.NewHTTPServer(ac, jwtConfig, c.Port)
 	err = s.Start()
 	if err != nil {
 		log.Fatal(err.Error())

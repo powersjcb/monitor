@@ -3,14 +3,15 @@ package gateway
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/gorilla/pat"
 	"github.com/powersjcb/monitor/go/src/client"
 	"github.com/powersjcb/monitor/go/src/server/db"
+	"github.com/powersjcb/monitor/go/src/server/usecases"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/api/trace"
 	"go.opentelemetry.io/otel/plugin/othttp"
 	"log"
 	"net/http"
-	"os"
 	"time"
 )
 
@@ -33,67 +34,98 @@ func NewTracer(handler http.Handler, tracer trace.Tracer) http.Handler {
 
 type HTTPServer struct {
 	appContext *ApplicationContext
+	jwtConfig JWTConfig
 	port       string
-	q          db.Querier
 }
 
 type ApplicationContext struct {
+	Querier db.Querier
 	Tracer otel.Tracer
 	Logger log.Logger
 }
 
-func NewHTTPServer(appContext *ApplicationContext, q db.Querier, port string) HTTPServer {
-	if q == nil {
+func NewHTTPServer(appContext *ApplicationContext, jwtConfig JWTConfig, port string) HTTPServer {
+	if appContext.Querier == nil {
 		panic("no db.Querier")
 	}
 	return HTTPServer{
 		appContext: appContext,
 		port:       port,
-		q:          q,
+		jwtConfig: jwtConfig,
 	}
 }
 
 func (s *HTTPServer) Start() error {
-	serverMux := http.NewServeMux()
-	serverMux.HandleFunc("/metric", s.Metric)
-	serverMux.HandleFunc("/pings", s.Ping)
-	serverMux.HandleFunc("/status", s.Status)
-	serverMux.HandleFunc("/", s.staticHandler)
+	p := pat.New()
+	p.Post("/metric", s.Metric)
+	p.Get("/pings", s.Ping)
+	p.Get("/status", s.Status)
+	p.Get("/auth/google/login", s.GoogleLoginHandler)
+	p.Get("/auth/google/callback", s.GoogleCallbackHandler)
+
+	p.Get("/", s.ShowAPIKey)
+	// start server
 	server := &http.Server{
 		Addr:         "0.0.0.0:" + s.port,
-		Handler:      NewTracer(NewLogger(serverMux), s.appContext.Tracer),
+		Handler:      NewTracer(NewLogger(p), s.appContext.Tracer),
 		ReadTimeout:  30 * time.Second,
 		WriteTimeout: 30 * time.Second,
 	}
-
 	err := server.ListenAndServe()
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 
-func (s HTTPServer) staticHandler(rw http.ResponseWriter, r *http.Request) {
-	publicDir := "./public"
-	fi, err := os.Stat(publicDir)
-	if err != nil || !fi.IsDir() {
+const googleEmailHeader = "X-Goog-Authenticated-User-Email"
+const googleIDHeader = "X-Goog-Authenticated-User-ID"
+
+func (s HTTPServer) ShowAPIKey(rw http.ResponseWriter, r *http.Request) {
+	email := r.Header.Get(googleEmailHeader)
+	id := r.Header.Get(googleIDHeader)
+
+	account, err := usecases.GetOrCreateAccount(r.Context(), s.appContext.Querier, "google", id)
+	if err != nil {
+		_, err = rw.Write([]byte(err.Error()))
+		if err != nil {
+			fmt.Printf("failed to write error response: %s", err.Error())
+		}
+		rw.WriteHeader(500)
 		return
 	}
-	staticsMap := map[string]string{
-		"": "./public/index.html",
-		"/": "./public/index.html",
-		"/static/index.js": "public/index.js",
-	}
-	static, exists := staticsMap[r.URL.Path]
-	if !exists {
-		rw.WriteHeader(404)
+
+	_, err = rw.Write([]byte(fmt.Sprintf("email: %s, apiKey: %s", email, account.ApiKey)))
+	if err != nil {
+		_, err = rw.Write([]byte(err.Error()))
+		if err != nil {
+			fmt.Printf("failed to write error response: %s", err.Error())
+		}
+		rw.WriteHeader(500)
 		return
 	}
-	http.ServeFile(rw, r, static)
 }
 
-func (s HTTPServer) Status(rw http.ResponseWriter, r *http.Request) {
+//func (s HTTPServer) staticHandler(rw http.ResponseWriter, r *http.Request) {
+//	publicDir := "./public"
+//	fi, err := os.Stat(publicDir)
+//	if err != nil || !fi.IsDir() {
+//		return
+//	}
+//	staticsMap := map[string]string{
+//		"": "./public/index.html",
+//		"/": "./public/index.html",
+//		"/static/index.js": "public/index.js",
+//	}
+//	static, exists := staticsMap[r.URL.Path]
+//	if !exists {
+//		rw.WriteHeader(404)
+//		return
+//	}
+//	http.ServeFile(rw, r, static)
+//}
+
+func (s HTTPServer) Status(rw http.ResponseWriter, _ *http.Request) {
 	_, _ = rw.Write([]byte("ok"))
 }
 
@@ -106,7 +138,7 @@ func (s HTTPServer) Metric(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = s.q.InsertMetric(r.Context(), m)
+	_, err = s.appContext.Querier.InsertMetric(r.Context(), m)
 	if err != nil {
 		fmt.Println(err.Error())
 		rw.WriteHeader(500)

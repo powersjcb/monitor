@@ -11,7 +11,7 @@ type Querier interface {
 	GetMetricForSource(ctx context.Context, source string) ([]Metric, error)
 	GetMetricStatsPerPeriod(ctx context.Context, seconds int32) ([]GetMetricStatsPerPeriodRow, error)
 	GetMetrics(ctx context.Context) ([]string, error)
-	InsertAccount(ctx context.Context, arg InsertAccountParams) (Account, error)
+	GetOrCreateAccount(ctx context.Context, arg GetOrCreateAccountParams) (Account, error)
 	InsertMetric(ctx context.Context, arg InsertMetricParams) (Metric, error)
 }
 

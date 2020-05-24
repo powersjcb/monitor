@@ -2,6 +2,8 @@ package gateway_test
 
 import (
 	"bytes"
+	"crypto/ecdsa"
+	"crypto/elliptic"
 	"database/sql"
 	"encoding/json"
 	"github.com/powersjcb/monitor/go/src/server/db"
@@ -13,10 +15,29 @@ import (
 	"time"
 )
 
-func server() (gateway.HTTPServer, *mocks.Querier) {
+type mockRandomReader struct {
+	n int
+}
+
+func (mockRandomReader) Read(b []byte) (int, error) {
+	return len(b), nil
+}
+
+func server() (gateway.HTTPServer, *mocks.Querier)  {
 	q := &mocks.Querier{}
-	appContext := gateway.ApplicationContext{}
-	return gateway.NewHTTPServer(&appContext, q, "9999"), q
+	appContext := gateway.ApplicationContext{
+		Querier: q,
+	}
+
+	key, err := ecdsa.GenerateKey(elliptic.P256(), mockRandomReader{})
+	if err != nil {
+		panic(err)
+	}
+	jwtConfig := gateway.JWTConfig{
+		PublicKey:  key.PublicKey,
+		PrivateKey: *key,
+	}
+	return gateway.NewHTTPServer(&appContext, jwtConfig, "9999"), q
 }
 
 func TestHTTPServer_Metric_EmptyPost(t *testing.T) {

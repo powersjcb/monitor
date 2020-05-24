@@ -20,23 +20,26 @@ func (q *Queries) GetAccountIDForAPIKey(ctx context.Context, apiKey string) (int
 	return id, err
 }
 
-const insertAccount = `-- name: InsertAccount :one
-INSERT INTO public.accounts (username, api_key, inserted_at)
-    VALUES ($1, $2, NOW())
-    RETURNING id, username, api_key, inserted_at
+const getOrCreateAccount = `-- name: GetOrCreateAccount :one
+INSERT INTO public.accounts (auth_provider_id, auth_provider, api_key, inserted_at)
+VALUES ($1, $2, $3, NOW())
+ON CONFLICT (auth_provider_id, auth_provider) DO NOTHING
+RETURNING id, auth_provider_id, auth_provider, api_key, inserted_at
 `
 
-type InsertAccountParams struct {
-	Username string `json:"username"`
-	ApiKey   string `json:"api_key"`
+type GetOrCreateAccountParams struct {
+	AuthProviderID string `json:"auth_provider_id"`
+	AuthProvider   string `json:"auth_provider"`
+	ApiKey         string `json:"api_key"`
 }
 
-func (q *Queries) InsertAccount(ctx context.Context, arg InsertAccountParams) (Account, error) {
-	row := q.db.QueryRowContext(ctx, insertAccount, arg.Username, arg.ApiKey)
+func (q *Queries) GetOrCreateAccount(ctx context.Context, arg GetOrCreateAccountParams) (Account, error) {
+	row := q.db.QueryRowContext(ctx, getOrCreateAccount, arg.AuthProviderID, arg.AuthProvider, arg.ApiKey)
 	var i Account
 	err := row.Scan(
 		&i.ID,
-		&i.Username,
+		&i.AuthProviderID,
+		&i.AuthProvider,
 		&i.ApiKey,
 		&i.InsertedAt,
 	)

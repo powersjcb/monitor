@@ -14,6 +14,27 @@ type Querier struct {
 	mock.Mock
 }
 
+// GetAccountIDForAPIKey provides a mock function with given fields: ctx, apiKey
+func (_m *Querier) GetAccountIDForAPIKey(ctx context.Context, apiKey string) (int64, error) {
+	ret := _m.Called(ctx, apiKey)
+
+	var r0 int64
+	if rf, ok := ret.Get(0).(func(context.Context, string) int64); ok {
+		r0 = rf(ctx, apiKey)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, apiKey)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // GetMetricForSource provides a mock function with given fields: ctx, source
 func (_m *Querier) GetMetricForSource(ctx context.Context, source string) ([]db.Metric, error) {
 	ret := _m.Called(ctx, source)
@@ -76,6 +97,27 @@ func (_m *Querier) GetMetrics(ctx context.Context) ([]string, error) {
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
 		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetOrCreateAccount provides a mock function with given fields: ctx, arg
+func (_m *Querier) GetOrCreateAccount(ctx context.Context, arg db.GetOrCreateAccountParams) (db.Account, error) {
+	ret := _m.Called(ctx, arg)
+
+	var r0 db.Account
+	if rf, ok := ret.Get(0).(func(context.Context, db.GetOrCreateAccountParams) db.Account); ok {
+		r0 = rf(ctx, arg)
+	} else {
+		r0 = ret.Get(0).(db.Account)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, db.GetOrCreateAccountParams) error); ok {
+		r1 = rf(ctx, arg)
 	} else {
 		r1 = ret.Error(1)
 	}

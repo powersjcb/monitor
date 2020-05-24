@@ -9,10 +9,11 @@ import (
 )
 
 type Account struct {
-	ID         int64        `json:"id"`
-	Username   string       `json:"username"`
-	ApiKey     string       `json:"api_key"`
-	InsertedAt sql.NullTime `json:"inserted_at"`
+	ID             int64        `json:"id"`
+	AuthProviderID string       `json:"auth_provider_id"`
+	AuthProvider   string       `json:"auth_provider"`
+	ApiKey         string       `json:"api_key"`
+	InsertedAt     sql.NullTime `json:"inserted_at"`
 }
 
 type Metric struct {
