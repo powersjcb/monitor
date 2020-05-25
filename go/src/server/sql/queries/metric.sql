@@ -1,6 +1,6 @@
 -- name: InsertMetric :one
-INSERT INTO public.metrics (ts, source, name, target, value, inserted_at)
-VALUES ($1, $2, $3, $4, $5, NOW())
+INSERT INTO public.metrics (account_id, ts, source, name, target, value, inserted_at)
+VALUES ($1, $2, $3, $4, $5, $6, NOW())
 RETURNING *;
 
 -- name: GetMetricStatsPerPeriod :many

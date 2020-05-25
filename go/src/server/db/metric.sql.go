@@ -65,21 +65,23 @@ func (q *Queries) GetMetricStatsPerPeriod(ctx context.Context, arg GetMetricStat
 }
 
 const insertMetric = `-- name: InsertMetric :one
-INSERT INTO public.metrics (ts, source, name, target, value, inserted_at)
-VALUES ($1, $2, $3, $4, $5, NOW())
+INSERT INTO public.metrics (account_id, ts, source, name, target, value, inserted_at)
+VALUES ($1, $2, $3, $4, $5, $6, NOW())
 RETURNING source, ts, inserted_at, name, target, value, ip_address, account_id
 `
 
 type InsertMetricParams struct {
-	Ts     sql.NullTime    `json:"ts"`
-	Source string          `json:"source"`
-	Name   string          `json:"name"`
-	Target string          `json:"target"`
-	Value  sql.NullFloat64 `json:"value"`
+	AccountID sql.NullInt64   `json:"account_id"`
+	Ts        sql.NullTime    `json:"ts"`
+	Source    string          `json:"source"`
+	Name      string          `json:"name"`
+	Target    string          `json:"target"`
+	Value     sql.NullFloat64 `json:"value"`
 }
 
 func (q *Queries) InsertMetric(ctx context.Context, arg InsertMetricParams) (Metric, error) {
 	row := q.db.QueryRowContext(ctx, insertMetric,
+		arg.AccountID,
 		arg.Ts,
 		arg.Source,
 		arg.Name,

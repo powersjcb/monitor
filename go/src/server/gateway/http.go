@@ -1,6 +1,7 @@
 package gateway
 
 import (
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"github.com/gorilla/pat"
@@ -121,6 +122,15 @@ func (s HTTPServer) Metric(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	id, err := UserIDFromContext(r.Context())
+	if err != nil {
+		rw.WriteHeader(500)
+		return
+	}
+	m.AccountID = sql.NullInt64{
+		Int64: id,
+		Valid: true,
+	}
 	_, err = s.appContext.Querier.InsertMetric(r.Context(), m)
 	if err != nil {
 		fmt.Println(err.Error())
