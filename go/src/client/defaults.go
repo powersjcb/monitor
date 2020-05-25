@@ -24,4 +24,11 @@ var DefaultPingConfigs = []PingConfig{
 		Name:   "app-engine@us-west2",
 		Period: 5 * time.Second,
 	},
-}
+	{
+		URL: "https://proxy.golang.org",
+		Period: 30 * time.Second,
+	},
+	{
+		URL: "https://github.com",
+		Period: 30 * time.Second,
+	},}
