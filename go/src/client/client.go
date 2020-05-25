@@ -47,11 +47,11 @@ func (h UploadHandler) Handle(ctx context.Context, result PingResult, e error) e
 	return nil
 }
 
-func RunPings(ctx context.Context, configs []PingConfig, runOnce bool, source string) error {
+func RunPings(ctx context.Context, apiKey string, configs []PingConfig, runOnce bool, source string) error {
 	c := NewService(ctx, configs, time.Second*10, runOnce)
 	c.AddHandler(LoggingHandler{})
 	c.AddHandler(UploadHandler{
-		HTTP:      httpclient.New(5 * time.Second),
+		HTTP:      httpclient.New(10 * time.Second, apiKey),
 		Source:    source,
 		Kind:      "icmp",
 		UploadURL: "https://carbide-datum-276117.wl.r.appspot.com/metric",
@@ -59,11 +59,11 @@ func RunPings(ctx context.Context, configs []PingConfig, runOnce bool, source st
 	return c.Start()
 }
 
-func RunHTTPPings(ctx context.Context, configs []PingConfig, runOnce bool, source string) error {
+func RunHTTPPings(ctx context.Context, apiKey string, configs []PingConfig, runOnce bool, source string) error {
 	c := NewHTTPService(ctx, configs, time.Second*1, runOnce)
 	c.AddHandler(LoggingHandler{})
 	c.AddHandler(UploadHandler{
-		HTTP:      httpclient.New(5 * time.Second),
+		HTTP:      httpclient.New(10 * time.Second, apiKey),
 		Source:    source,
 		Kind:      "http",
 		UploadURL: "https://carbide-datum-276117.wl.r.appspot.com/metric",

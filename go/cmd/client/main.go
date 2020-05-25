@@ -31,7 +31,8 @@ func main() {
 	}
 	h, _ := os.Hostname()
 	ctx := context.Background()
-	err = client.RunPings(ctx, pingConfigs, *runOnce, h)
+	apiKey := os.Getenv("MONITOR_API_KEY")
+	err = client.RunPings(ctx, apiKey, pingConfigs, *runOnce, h)
 	if err != nil {
 		log.Fatal(err)
 	}

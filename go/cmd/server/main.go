@@ -38,7 +38,7 @@ func main() {
 		ClientID:     c.OAuthClientID,
 		ClientSecret: c.OAuthClientSecret,
 	}
-	s := gateway.NewHTTPServer(ac, jwtConfig, oaConfig, c.Port)
+	s := gateway.NewHTTPServer(ac, jwtConfig, oaConfig, c.Port, c.APIKey)
 	err = s.Start()
 	if err != nil {
 		log.Fatal(err.Error())

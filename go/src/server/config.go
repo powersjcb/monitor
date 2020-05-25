@@ -23,6 +23,7 @@ type Config struct {
 	OAuthClientID     string
 	OAuthClientSecret string
 	OAuthRedirectURL  string
+	APIKey			  string
 }
 
 func GetConfig(ctx context.Context) (Config, error) {
@@ -84,6 +85,12 @@ func GetConfig(ctx context.Context) (Config, error) {
 
 	r, err := getGoogleRedirectURL(ctx, secretClient)
 	c.OAuthRedirectURL = r
+	if err != nil {
+		return c, err
+	}
+
+	key, err := getAPIKey(ctx, secretClient)
+	c.APIKey = key
 	if err != nil {
 		return c, err
 	}
@@ -153,6 +160,14 @@ func getGoogleRedirectURL(ctx context.Context, secretClient *secretmanager.Clien
 		return val, nil
 	}
 	return getSecretValue(ctx, secretClient, "monitor_google_client_redirect_url")
+}
+
+func getAPIKey(ctx context.Context, secretClient *secretmanager.Client) (string, error) {
+	val := os.Getenv("MONITOR_API_KEY")
+	if val != "" {
+		return val, nil
+	}
+	return getSecretValue(ctx, secretClient, "monitor_api_key")
 }
 
 // helper funcs

@@ -204,6 +204,16 @@ resource "google_secret_manager_secret" "google_client_redirect_url" {
   depends_on = [google_project_service.secretmanager]
 }
 
+resource "google_secret_manager_secret" "app_api_key" {
+  provider = google-beta
+  secret_id = "${var.app_name}_api_key"
+
+  replication {
+    automatic = true
+  }
+  depends_on = [google_project_service.secretmanager]
+}
+
 resource "google_secret_manager_secret_iam_member" "app_engine" {
   provider = google-beta
   project = var.project_id
@@ -263,6 +273,15 @@ resource "google_secret_manager_secret_iam_member" "app_engine_google_client_red
   project = var.project_id
 
   secret_id = google_secret_manager_secret.google_client_redirect_url.id
+  role = "roles/secretmanager.secretAccessor"
+  member = "serviceAccount:${google_service_account.app_engine.email}"
+}
+
+resource "google_secret_manager_secret_iam_member" "app_engine_app_api_key" {
+  provider = google-beta
+  project = var.project_id
+
+  secret_id = google_secret_manager_secret.app_api_key.id
   role = "roles/secretmanager.secretAccessor"
   member = "serviceAccount:${google_service_account.app_engine.email}"
 }

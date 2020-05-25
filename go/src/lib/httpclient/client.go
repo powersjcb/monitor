@@ -10,6 +10,7 @@ import (
 
 // exposes same interface as http.Client, but provides tracing
 type Client struct {
+	apiKey string
 	client *http.Client
 }
 
@@ -31,11 +32,13 @@ func (c *Client) PostWithContext(ctx context.Context, url, contentType string, b
 	ctx, req = httptrace.W3C(ctx, req)
 	httptrace.Inject(ctx, req)
 	req.Header.Set("Content-Type", contentType)
+	req.Header.Set("X-API-KEY", c.apiKey)
 	return c.client.Do(req)
 }
 
-func New(timeout time.Duration) Client {
+func New(timeout time.Duration, apiKey string) Client {
 	return Client{
+		apiKey: apiKey,
 		client: &http.Client{
 			Timeout: timeout,
 		},

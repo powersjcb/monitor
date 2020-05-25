@@ -38,6 +38,7 @@ type HTTPServer struct {
 	jwtConfig  JWTConfig
 	oauthConfig OAUTHConfig
 	port       string
+	apiKey     string
 }
 
 type ApplicationContext struct {
@@ -46,7 +47,7 @@ type ApplicationContext struct {
 	Logger       log.Logger
 }
 
-func NewHTTPServer(appContext *ApplicationContext, jwtConfig JWTConfig, oauth OAUTHConfig, port string) HTTPServer {
+func NewHTTPServer(appContext *ApplicationContext, jwtConfig JWTConfig, oauth OAUTHConfig, port, apiKey string) HTTPServer {
 	if appContext.Querier == nil {
 		panic("no db.Querier")
 	}
@@ -55,6 +56,7 @@ func NewHTTPServer(appContext *ApplicationContext, jwtConfig JWTConfig, oauth OA
 		jwtConfig:  jwtConfig,
 		oauthConfig: oauth,
 		port:       port,
+		apiKey: apiKey,
 	}
 }
 
@@ -64,10 +66,10 @@ func (s *HTTPServer) Start() error {
 	p.Get(loginPath, s.GoogleLoginHandler)
 	p.Get("/auth/google/callback", s.GoogleCallbackHandler)
 	p.Get("/status", s.Status)
+	p.Get("/pings", s.Ping)
 
 	// endpoints requiring authorization
 	p.Post("/metric", s.Authenticated(s.Metric))
-	p.Get("/pings", s.Authenticated(s.Ping))
 	p.Get("/", s.Authenticated(s.ShowAPIKey))
 
 	// start server
@@ -128,7 +130,7 @@ func (s HTTPServer) Metric(rw http.ResponseWriter, r *http.Request) {
 }
 
 func (s HTTPServer) Ping(rw http.ResponseWriter, r *http.Request) {
-	err := client.RunHTTPPings(r.Context(), client.DefaultPingConfigs, true, r.Host)
+	err := client.RunHTTPPings(r.Context(), s.apiKey, client.DefaultPingConfigs, true, r.Host)
 	if err != nil {
 		fmt.Printf("failed to run pings: %s", err.Error())
 		rw.WriteHeader(500)
