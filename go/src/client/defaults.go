@@ -25,10 +25,10 @@ var DefaultPingConfigs = []PingConfig{
 		Period: 5 * time.Second,
 	},
 	{
-		URL: "https://proxy.golang.org",
+		URL: "proxy.golang.org",
 		Period: 30 * time.Second,
 	},
 	{
-		URL: "https://github.com",
+		URL: "github.com",
 		Period: 30 * time.Second,
 	},}
