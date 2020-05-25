@@ -71,7 +71,7 @@ RETURNING source, ts, inserted_at, name, target, value, ip_address, account_id
 `
 
 type InsertMetricParams struct {
-	AccountID sql.NullInt64   `json:"account_id"`
+	AccountID int64           `json:"account_id"`
 	Ts        sql.NullTime    `json:"ts"`
 	Source    string          `json:"source"`
 	Name      string          `json:"name"`

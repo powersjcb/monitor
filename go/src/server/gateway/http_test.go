@@ -69,10 +69,7 @@ func TestHTTPServer_Metric_Valid(t *testing.T) {
 	}
 	var accountID int64 = 1
 	metric := db.Metric{
-		AccountID: 	sql.NullInt64{
-			Int64: accountID,
-			Valid: true,
-		},
+		AccountID:  accountID,
 		Source:     metricParams.Source,
 		Ts:         metricParams.Ts,
 		InsertedAt: time.Now(),

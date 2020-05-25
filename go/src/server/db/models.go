@@ -24,5 +24,5 @@ type Metric struct {
 	Target     string          `json:"target"`
 	Value      sql.NullFloat64 `json:"value"`
 	IpAddress  net.IP          `json:"ip_address"`
-	AccountID  sql.NullInt64   `json:"account_id"`
+	AccountID  int64           `json:"account_id"`
 }
