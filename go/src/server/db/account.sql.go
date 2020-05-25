@@ -7,6 +7,51 @@ import (
 	"context"
 )
 
+const getAccountByID = `-- name: GetAccountByID :one
+SELECT id, auth_provider_id, auth_provider, api_key, inserted_at
+FROM public.accounts
+WHERE id = $1
+LIMIT 1
+`
+
+func (q *Queries) GetAccountByID(ctx context.Context, id int64) (Account, error) {
+	row := q.db.QueryRowContext(ctx, getAccountByID, id)
+	var i Account
+	err := row.Scan(
+		&i.ID,
+		&i.AuthProviderID,
+		&i.AuthProvider,
+		&i.ApiKey,
+		&i.InsertedAt,
+	)
+	return i, err
+}
+
+const getAccountByProviderID = `-- name: GetAccountByProviderID :one
+SELECT id, auth_provider_id, auth_provider, api_key, inserted_at
+FROM public.accounts
+WHERE auth_provider = $1 AND auth_provider_id = $2
+LIMIT 1
+`
+
+type GetAccountByProviderIDParams struct {
+	AuthProvider   string `json:"auth_provider"`
+	AuthProviderID string `json:"auth_provider_id"`
+}
+
+func (q *Queries) GetAccountByProviderID(ctx context.Context, arg GetAccountByProviderIDParams) (Account, error) {
+	row := q.db.QueryRowContext(ctx, getAccountByProviderID, arg.AuthProvider, arg.AuthProviderID)
+	var i Account
+	err := row.Scan(
+		&i.ID,
+		&i.AuthProviderID,
+		&i.AuthProvider,
+		&i.ApiKey,
+		&i.InsertedAt,
+	)
+	return i, err
+}
+
 const getAccountIDForAPIKey = `-- name: GetAccountIDForAPIKey :one
 SELECT id
 FROM public.accounts
@@ -20,21 +65,20 @@ func (q *Queries) GetAccountIDForAPIKey(ctx context.Context, apiKey string) (int
 	return id, err
 }
 
-const getOrCreateAccount = `-- name: GetOrCreateAccount :one
-INSERT INTO public.accounts (auth_provider_id, auth_provider, api_key, inserted_at)
+const insertAccount = `-- name: InsertAccount :one
+INSERT INTO public.accounts (auth_provider, auth_provider_id, api_key, inserted_at)
 VALUES ($1, $2, $3, NOW())
-ON CONFLICT (auth_provider_id, auth_provider) DO NOTHING
 RETURNING id, auth_provider_id, auth_provider, api_key, inserted_at
 `
 
-type GetOrCreateAccountParams struct {
-	AuthProviderID string `json:"auth_provider_id"`
+type InsertAccountParams struct {
 	AuthProvider   string `json:"auth_provider"`
+	AuthProviderID string `json:"auth_provider_id"`
 	ApiKey         string `json:"api_key"`
 }
 
-func (q *Queries) GetOrCreateAccount(ctx context.Context, arg GetOrCreateAccountParams) (Account, error) {
-	row := q.db.QueryRowContext(ctx, getOrCreateAccount, arg.AuthProviderID, arg.AuthProvider, arg.ApiKey)
+func (q *Queries) InsertAccount(ctx context.Context, arg InsertAccountParams) (Account, error) {
+	row := q.db.QueryRowContext(ctx, insertAccount, arg.AuthProvider, arg.AuthProviderID, arg.ApiKey)
 	var i Account
 	err := row.Scan(
 		&i.ID,

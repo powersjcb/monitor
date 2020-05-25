@@ -27,7 +27,7 @@ func main() {
 	t := global.Tracer("monitor.jacobpowers.me")
 	ac := &gateway.ApplicationContext{
 		Querier: q,
-		Tracer: t,
+		Tracer:  t,
 	}
 	jwtConfig := gateway.JWTConfig{
 		PublicKey:  c.JTWPublicKey,

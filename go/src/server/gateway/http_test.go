@@ -16,14 +16,13 @@ import (
 )
 
 type mockRandomReader struct {
-	n int
 }
 
 func (mockRandomReader) Read(b []byte) (int, error) {
 	return len(b), nil
 }
 
-func server() (gateway.HTTPServer, *mocks.Querier)  {
+func server() (gateway.HTTPServer, *mocks.Querier) {
 	q := &mocks.Querier{}
 	appContext := gateway.ApplicationContext{
 		Querier: q,

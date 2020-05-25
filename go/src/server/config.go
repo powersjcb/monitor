@@ -15,9 +15,9 @@ import (
 )
 
 type Config struct {
-	Port     string
-	Database string
-	HCAPIKey string
+	Port          string
+	Database      string
+	HCAPIKey      string
 	JTWPublicKey  ecdsa.PublicKey
 	JTWPrivateKey ecdsa.PrivateKey
 }

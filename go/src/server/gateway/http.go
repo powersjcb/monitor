@@ -6,7 +6,6 @@ import (
 	"github.com/gorilla/pat"
 	"github.com/powersjcb/monitor/go/src/client"
 	"github.com/powersjcb/monitor/go/src/server/db"
-	"github.com/powersjcb/monitor/go/src/server/usecases"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/api/trace"
 	"go.opentelemetry.io/otel/plugin/othttp"
@@ -14,6 +13,8 @@ import (
 	"net/http"
 	"time"
 )
+
+const loginPath = "/auth/google/login"
 
 type Logger struct {
 	handler http.Handler
@@ -34,14 +35,14 @@ func NewTracer(handler http.Handler, tracer trace.Tracer) http.Handler {
 
 type HTTPServer struct {
 	appContext *ApplicationContext
-	jwtConfig JWTConfig
+	jwtConfig  JWTConfig
 	port       string
 }
 
 type ApplicationContext struct {
 	Querier db.Querier
-	Tracer otel.Tracer
-	Logger log.Logger
+	Tracer  otel.Tracer
+	Logger  log.Logger
 }
 
 func NewHTTPServer(appContext *ApplicationContext, jwtConfig JWTConfig, port string) HTTPServer {
@@ -51,19 +52,22 @@ func NewHTTPServer(appContext *ApplicationContext, jwtConfig JWTConfig, port str
 	return HTTPServer{
 		appContext: appContext,
 		port:       port,
-		jwtConfig: jwtConfig,
+		jwtConfig:  jwtConfig,
 	}
 }
 
 func (s *HTTPServer) Start() error {
 	p := pat.New()
-	p.Post("/metric", s.Metric)
-	p.Get("/pings", s.Ping)
-	p.Get("/status", s.Status)
-	p.Get("/auth/google/login", s.GoogleLoginHandler)
+	// public endpoints
+	p.Get(loginPath, s.GoogleLoginHandler)
 	p.Get("/auth/google/callback", s.GoogleCallbackHandler)
+	p.Get("/status", s.Status)
 
-	p.Get("/", s.ShowAPIKey)
+	// endpoints requiring authorization
+	p.Post("/metric", s.Authenticated(s.Metric))
+	p.Get("/pings", s.Authenticated(s.Ping))
+	p.Get("/", s.Authenticated(s.ShowAPIKey))
+
 	// start server
 	server := &http.Server{
 		Addr:         "0.0.0.0:" + s.port,
@@ -78,24 +82,18 @@ func (s *HTTPServer) Start() error {
 	return nil
 }
 
-const googleEmailHeader = "X-Goog-Authenticated-User-Email"
-const googleIDHeader = "X-Goog-Authenticated-User-ID"
-
 func (s HTTPServer) ShowAPIKey(rw http.ResponseWriter, r *http.Request) {
-	email := r.Header.Get(googleEmailHeader)
-	id := r.Header.Get(googleIDHeader)
-
-	account, err := usecases.GetOrCreateAccount(r.Context(), s.appContext.Querier, "google", id)
+	userID, err := UserIDFromContext(r.Context())
 	if err != nil {
-		_, err = rw.Write([]byte(err.Error()))
-		if err != nil {
-			fmt.Printf("failed to write error response: %s", err.Error())
-		}
+		fmt.Println("userID not available on context")
 		rw.WriteHeader(500)
-		return
 	}
-
-	_, err = rw.Write([]byte(fmt.Sprintf("email: %s, apiKey: %s", email, account.ApiKey)))
+	account, err := s.appContext.Querier.GetAccountByID(r.Context(), userID)
+	if err != nil {
+		fmt.Println(err.Error())
+		rw.WriteHeader(500)
+	}
+	_, err = rw.Write([]byte(fmt.Sprintf("userID: %d, apiKey: %s", userID, account.ApiKey)))
 	if err != nil {
 		_, err = rw.Write([]byte(err.Error()))
 		if err != nil {
@@ -105,25 +103,6 @@ func (s HTTPServer) ShowAPIKey(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
-
-//func (s HTTPServer) staticHandler(rw http.ResponseWriter, r *http.Request) {
-//	publicDir := "./public"
-//	fi, err := os.Stat(publicDir)
-//	if err != nil || !fi.IsDir() {
-//		return
-//	}
-//	staticsMap := map[string]string{
-//		"": "./public/index.html",
-//		"/": "./public/index.html",
-//		"/static/index.js": "public/index.js",
-//	}
-//	static, exists := staticsMap[r.URL.Path]
-//	if !exists {
-//		rw.WriteHeader(404)
-//		return
-//	}
-//	http.ServeFile(rw, r, static)
-//}
 
 func (s HTTPServer) Status(rw http.ResponseWriter, _ *http.Request) {
 	_, _ = rw.Write([]byte("ok"))

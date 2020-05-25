@@ -2,6 +2,7 @@ package usecases
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"github.com/powersjcb/monitor/go/src/lib/crypto"
 	"github.com/powersjcb/monitor/go/src/server/db"
@@ -14,10 +15,19 @@ func GetOrCreateAccount(ctx context.Context, q db.Querier, provider, providerID 
 	if providerID == "" {
 		return db.Account{}, errors.New("poviderID cannot be empty")
 	}
-	return q.GetOrCreateAccount(ctx, db.GetOrCreateAccountParams{
+
+	account, err := q.GetAccountByProviderID(ctx, db.GetAccountByProviderIDParams{AuthProvider: provider, AuthProviderID: providerID})
+	if err != nil {
+		if err != sql.ErrNoRows {
+			return account, err
+		}
+	} else {
+		return account, nil
+	}
+
+	return q.InsertAccount(ctx, db.InsertAccountParams{
 		AuthProviderID: providerID,
 		AuthProvider:   provider,
 		ApiKey:         crypto.GetToken(64),
 	})
 }
-
