@@ -32,6 +32,9 @@ func main() {
 	h, _ := os.Hostname()
 	ctx := context.Background()
 	apiKey := os.Getenv("MONITOR_API_KEY")
+	if apiKey == "" {
+		fmt.Println("warning invalid api key")
+	}
 	err = client.RunPings(ctx, apiKey, pingConfigs, *runOnce, h)
 	if err != nil {
 		log.Fatal(err)
