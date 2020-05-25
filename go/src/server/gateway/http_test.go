@@ -67,8 +67,12 @@ func TestHTTPServer_Metric_Valid(t *testing.T) {
 			Valid:   true,
 		},
 	}
-
+	var accountID int64 = 1
 	metric := db.Metric{
+		AccountID: 	sql.NullInt64{
+			Int64: accountID,
+			Valid: true,
+		},
 		Source:     metricParams.Source,
 		Ts:         metricParams.Ts,
 		InsertedAt: time.Now(),
@@ -83,6 +87,7 @@ func TestHTTPServer_Metric_Valid(t *testing.T) {
 	}
 
 	r := httptest.NewRequest("POST", "/metric", bytes.NewReader(data))
+	r = r.WithContext(gateway.WithUserID(r.Context(), accountID))
 	w := httptest.NewRecorder()
 
 	q.On("InsertMetric", mock.Anything, mock.AnythingOfType("db.InsertMetricParams")).Return(metric, nil)
