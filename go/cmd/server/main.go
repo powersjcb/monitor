@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	_ "github.com/lib/pq"
 	"github.com/powersjcb/monitor/go/src/lib/tracer"
 	"github.com/powersjcb/monitor/go/src/server"
