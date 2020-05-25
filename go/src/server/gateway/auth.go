@@ -162,10 +162,23 @@ func getUserInfo(ctx context.Context, csrfState, state, code string) ([]byte, er
 }
 
 // Auth Middleware
+const XAPIKey = "X-API-KEY"
 
 func (s HTTPServer) Authenticated(handler func(http.ResponseWriter, *http.Request)) func(http.ResponseWriter, *http.Request) {
 	return func(rw http.ResponseWriter, r *http.Request) {
-		// todo: handle api keys
+		// check apiKey
+		apiKey := r.Header.Get(XAPIKey)
+		if apiKey != "" {
+			accountID, err := s.appContext.Querier.GetAccountIDForAPIKey(r.Context(), apiKey)
+			if err == nil {
+				ctx := WithUserID(r.Context(), accountID)
+				handler(rw, r.WithContext(ctx))
+				return
+			}
+			rw.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		// check jwt
 		cookie, err := r.Cookie(jwtCookieName)
 		if err != nil || cookie == nil {
 			redirectToLogin(rw, r)

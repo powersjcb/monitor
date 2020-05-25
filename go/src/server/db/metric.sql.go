@@ -8,44 +8,6 @@ import (
 	"database/sql"
 )
 
-const getMetricForSource = `-- name: GetMetricForSource :many
-select source, ts, inserted_at, name, target, value, ip_address, account_id
-from public.metrics
-where source = $1
-`
-
-func (q *Queries) GetMetricForSource(ctx context.Context, source string) ([]Metric, error) {
-	rows, err := q.db.QueryContext(ctx, getMetricForSource, source)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Metric
-	for rows.Next() {
-		var i Metric
-		if err := rows.Scan(
-			&i.Source,
-			&i.Ts,
-			&i.InsertedAt,
-			&i.Name,
-			&i.Target,
-			&i.Value,
-			&i.IpAddress,
-			&i.AccountID,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const getMetricStatsPerPeriod = `-- name: GetMetricStatsPerPeriod :many
 select m.source,
        m.name,
@@ -54,8 +16,14 @@ select m.source,
        max(m.value) max,
        min(m.value) min
 from public.metrics m
+where account_id = $2::bigint
 group by m.source, m.name, ts_bucket
 `
+
+type GetMetricStatsPerPeriodParams struct {
+	Seconds   int32 `json:"seconds"`
+	AccountID int64 `json:"account_id"`
+}
 
 type GetMetricStatsPerPeriodRow struct {
 	Source string      `json:"source"`
@@ -66,8 +34,8 @@ type GetMetricStatsPerPeriodRow struct {
 	Min    interface{} `json:"min"`
 }
 
-func (q *Queries) GetMetricStatsPerPeriod(ctx context.Context, seconds int32) ([]GetMetricStatsPerPeriodRow, error) {
-	rows, err := q.db.QueryContext(ctx, getMetricStatsPerPeriod, seconds)
+func (q *Queries) GetMetricStatsPerPeriod(ctx context.Context, arg GetMetricStatsPerPeriodParams) ([]GetMetricStatsPerPeriodRow, error) {
+	rows, err := q.db.QueryContext(ctx, getMetricStatsPerPeriod, arg.Seconds, arg.AccountID)
 	if err != nil {
 		return nil, err
 	}
@@ -86,35 +54,6 @@ func (q *Queries) GetMetricStatsPerPeriod(ctx context.Context, seconds int32) ([
 			return nil, err
 		}
 		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getMetrics = `-- name: GetMetrics :many
-select distinct(m.source)
-from public.metrics m
-`
-
-// list of all current metrics names
-func (q *Queries) GetMetrics(ctx context.Context) ([]string, error) {
-	rows, err := q.db.QueryContext(ctx, getMetrics)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []string
-	for rows.Next() {
-		var source string
-		if err := rows.Scan(&source); err != nil {
-			return nil, err
-		}
-		items = append(items, source)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err

@@ -3,18 +3,6 @@ INSERT INTO public.metrics (ts, source, name, target, value, inserted_at)
 VALUES ($1, $2, $3, $4, $5, NOW())
 RETURNING *;
 
-
--- list of all current metrics names
--- name: GetMetrics :many
-select distinct(m.source)
-from public.metrics m;
-
-
--- name: GetMetricForSource :many
-select *
-from public.metrics
-where source = $1;
-
 -- name: GetMetricStatsPerPeriod :many
 select m.source,
        m.name,
@@ -23,5 +11,6 @@ select m.source,
        max(m.value) max,
        min(m.value) min
 from public.metrics m
+where account_id = sqlc.arg(account_id)::bigint
 group by m.source, m.name, ts_bucket;
 

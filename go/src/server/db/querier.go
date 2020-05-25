@@ -10,9 +10,7 @@ type Querier interface {
 	GetAccountByID(ctx context.Context, id int64) (Account, error)
 	GetAccountByProviderID(ctx context.Context, arg GetAccountByProviderIDParams) (Account, error)
 	GetAccountIDForAPIKey(ctx context.Context, apiKey string) (int64, error)
-	GetMetricForSource(ctx context.Context, source string) ([]Metric, error)
-	GetMetricStatsPerPeriod(ctx context.Context, seconds int32) ([]GetMetricStatsPerPeriodRow, error)
-	GetMetrics(ctx context.Context) ([]string, error)
+	GetMetricStatsPerPeriod(ctx context.Context, arg GetMetricStatsPerPeriodParams) ([]GetMetricStatsPerPeriodRow, error)
 	InsertAccount(ctx context.Context, arg InsertAccountParams) (Account, error)
 	InsertMetric(ctx context.Context, arg InsertMetricParams) (Metric, error)
 }
