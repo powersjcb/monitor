@@ -17,14 +17,18 @@ func main() {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
+
+	tracer.InitTracer(c.HCAPIKey)
+	t := global.Tracer("monitor.jacobpowers.me")
+	_, span := t.Start(ctx, "server.run")
+	defer span.End()
+
 	conn, err := tracer.OpenDB(c.Database)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 
 	q := db.New(conn)
-	tracer.InitTracer(c.HCAPIKey)
-	t := global.Tracer("monitor.jacobpowers.me")
 	ac := &gateway.ApplicationContext{
 		Querier: q,
 		Tracer:  t,
