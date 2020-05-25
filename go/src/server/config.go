@@ -99,7 +99,7 @@ func getPublicKey(ctx context.Context, secretClient *secretmanager.Client) (stri
 	if val != "" {
 		return val, nil
 	}
-	return getSecretValue(ctx, secretClient, "monitor_jtw_ec_public_key")
+	return getSecretValue(ctx, secretClient, "monitor_jwt_ec_public_key")
 }
 
 func getPrivateKey(ctx context.Context, secretClient *secretmanager.Client) (string, error) {
@@ -107,7 +107,7 @@ func getPrivateKey(ctx context.Context, secretClient *secretmanager.Client) (str
 	if val != "" {
 		return val, nil
 	}
-	return getSecretValue(ctx, secretClient, "monitor_jtw_ec_private_key")
+	return getSecretValue(ctx, secretClient, "monitor_jwt_ec_private_key")
 }
 
 // helper funcs

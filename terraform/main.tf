@@ -154,6 +154,26 @@ resource "google_secret_manager_secret" "hc_api_key" {
   depends_on = [google_project_service.secretmanager]
 }
 
+resource "google_secret_manager_secret" "jwt_ec_private_key" {
+  provider = google-beta
+  secret_id = "${var.app_name}_jwt_ec_private_key"
+
+  replication {
+    automatic = true
+  }
+  depends_on = [google_project_service.secretmanager]
+}
+
+resource "google_secret_manager_secret" "jwt_ec_public_key" {
+  provider = google-beta
+  secret_id = "${var.app_name}_jwt_ec_public_key"
+
+  replication {
+    automatic = true
+  }
+  depends_on = [google_project_service.secretmanager]
+}
+
 resource "google_secret_manager_secret_iam_member" "app_engine" {
   provider = google-beta
   project = var.project_id
@@ -168,6 +188,24 @@ resource "google_secret_manager_secret_iam_member" "app_engine_hc_api_key" {
   project = var.project_id
 
   secret_id = google_secret_manager_secret.hc_api_key.id
+  role = "roles/secretmanager.secretAccessor"
+  member = "serviceAccount:${google_service_account.app_engine.email}"
+}
+
+resource "google_secret_manager_secret_iam_member" "app_engine_jwt_ec_public_key" {
+  provider = google-beta
+  project = var.project_id
+
+  secret_id = google_secret_manager_secret.jwt_ec_public_key.id
+  role = "roles/secretmanager.secretAccessor"
+  member = "serviceAccount:${google_service_account.app_engine.email}"
+}
+
+resource "google_secret_manager_secret_iam_member" "app_engine_jwt_ec_private_key" {
+  provider = google-beta
+  project = var.project_id
+
+  secret_id = google_secret_manager_secret.jwt_ec_private_key.id
   role = "roles/secretmanager.secretAccessor"
   member = "serviceAccount:${google_service_account.app_engine.email}"
 }
