@@ -36,23 +36,25 @@ func NewTracer(handler http.Handler, tracer trace.Tracer) http.Handler {
 type HTTPServer struct {
 	appContext *ApplicationContext
 	jwtConfig  JWTConfig
+	oauthConfig OAUTHConfig
 	port       string
 }
 
 type ApplicationContext struct {
-	Querier db.Querier
-	Tracer  otel.Tracer
-	Logger  log.Logger
+	Querier      db.Querier
+	Tracer       otel.Tracer
+	Logger       log.Logger
 }
 
-func NewHTTPServer(appContext *ApplicationContext, jwtConfig JWTConfig, port string) HTTPServer {
+func NewHTTPServer(appContext *ApplicationContext, jwtConfig JWTConfig, oauth OAUTHConfig, port string) HTTPServer {
 	if appContext.Querier == nil {
 		panic("no db.Querier")
 	}
 	return HTTPServer{
 		appContext: appContext,
-		port:       port,
 		jwtConfig:  jwtConfig,
+		oauthConfig: oauth,
+		port:       port,
 	}
 }
 

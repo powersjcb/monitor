@@ -174,6 +174,36 @@ resource "google_secret_manager_secret" "jwt_ec_public_key" {
   depends_on = [google_project_service.secretmanager]
 }
 
+resource "google_secret_manager_secret" "google_client_id" {
+  provider = google-beta
+  secret_id = "${var.app_name}_google_client_id"
+
+  replication {
+    automatic = true
+  }
+  depends_on = [google_project_service.secretmanager]
+}
+
+resource "google_secret_manager_secret" "google_client_secret" {
+  provider = google-beta
+  secret_id = "${var.app_name}_google_client_secret"
+
+  replication {
+    automatic = true
+  }
+  depends_on = [google_project_service.secretmanager]
+}
+
+resource "google_secret_manager_secret" "google_client_redirect_url" {
+  provider = google-beta
+  secret_id = "${var.app_name}_google_client_redirect_url"
+
+  replication {
+    automatic = true
+  }
+  depends_on = [google_project_service.secretmanager]
+}
+
 resource "google_secret_manager_secret_iam_member" "app_engine" {
   provider = google-beta
   project = var.project_id
@@ -206,6 +236,33 @@ resource "google_secret_manager_secret_iam_member" "app_engine_jwt_ec_private_ke
   project = var.project_id
 
   secret_id = google_secret_manager_secret.jwt_ec_private_key.id
+  role = "roles/secretmanager.secretAccessor"
+  member = "serviceAccount:${google_service_account.app_engine.email}"
+}
+
+resource "google_secret_manager_secret_iam_member" "app_engine_google_client_id" {
+  provider = google-beta
+  project = var.project_id
+
+  secret_id = google_secret_manager_secret.google_client_id.id
+  role = "roles/secretmanager.secretAccessor"
+  member = "serviceAccount:${google_service_account.app_engine.email}"
+}
+
+resource "google_secret_manager_secret_iam_member" "app_engine_google_client_secret" {
+  provider = google-beta
+  project = var.project_id
+
+  secret_id = google_secret_manager_secret.google_client_secret.id
+  role = "roles/secretmanager.secretAccessor"
+  member = "serviceAccount:${google_service_account.app_engine.email}"
+}
+
+resource "google_secret_manager_secret_iam_member" "app_engine_google_client_redirect_url" {
+  provider = google-beta
+  project = var.project_id
+
+  secret_id = google_secret_manager_secret.google_client_redirect_url.id
   role = "roles/secretmanager.secretAccessor"
   member = "serviceAccount:${google_service_account.app_engine.email}"
 }

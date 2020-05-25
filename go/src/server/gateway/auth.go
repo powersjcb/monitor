@@ -15,7 +15,6 @@ import (
 	"gopkg.in/go-playground/validator.v9"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 )
@@ -27,14 +26,20 @@ type googleUserInfo struct {
 	Picture       string `json:"picture"`
 }
 
-func getConfig() *oauth2.Config {
+func getConfig(config OAUTHConfig) *oauth2.Config {
 	return &oauth2.Config{
-		RedirectURL:  "http://localhost:8080/auth/google/callback",
-		ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
-		ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
+		RedirectURL:  config.RedirectURL,
+		ClientID:     config.ClientID,
+		ClientSecret: config.ClientSecret,
 		Scopes:       []string{"https://www.googleapis.com/auth/userinfo.email"},
 		Endpoint:     google.Endpoint,
 	}
+}
+
+type OAUTHConfig struct {
+	RedirectURL  string
+	ClientID 	 string
+	ClientSecret string
 }
 
 type JWTConfig struct {
@@ -48,7 +53,7 @@ var signingMethod = jwt.SigningMethodES256
 
 func (s HTTPServer) GoogleLoginHandler(rw http.ResponseWriter, r *http.Request) {
 	stateString := crypto.GetToken(32)
-	url := getConfig().AuthCodeURL(stateString)
+	url := getConfig(s.oauthConfig).AuthCodeURL(stateString)
 	var cookie = http.Cookie{
 		Name:     csrfCookieName,
 		Value:    stateString,
@@ -77,7 +82,7 @@ func (s HTTPServer) GoogleCallbackHandler(rw http.ResponseWriter, r *http.Reques
 		rw.WriteHeader(500)
 		return
 	}
-	content, err := getUserInfo(r.Context(), cookie.Value, r.FormValue("state"), r.FormValue("code"))
+	content, err := s.getUserInfo(r.Context(), cookie.Value, r.FormValue("state"), r.FormValue("code"))
 	if err != nil {
 		fmt.Println(err.Error())
 		http.Redirect(rw, r, "/", http.StatusTemporaryRedirect)
@@ -141,11 +146,11 @@ func gaeHTTPS(r *http.Request) bool {
 	return r.Header.Get("X-AppEngine-Https") == "on"
 }
 
-func getUserInfo(ctx context.Context, csrfState, state, code string) ([]byte, error) {
+func (s HTTPServer) getUserInfo(ctx context.Context, csrfState, state, code string) ([]byte, error) {
 	if state != csrfState {
 		return nil, fmt.Errorf("invalid oauth state")
 	}
-	token, err := getConfig().Exchange(ctx, code)
+	token, err := getConfig(s.oauthConfig).Exchange(ctx, code)
 	if err != nil {
 		return nil, fmt.Errorf("code exchange failed: %s", err.Error())
 	}

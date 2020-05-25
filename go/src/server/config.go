@@ -20,6 +20,9 @@ type Config struct {
 	HCAPIKey      string
 	JTWPublicKey  ecdsa.PublicKey
 	JTWPrivateKey ecdsa.PrivateKey
+	OAuthClientID     string
+	OAuthClientSecret string
+	OAuthRedirectURL  string
 }
 
 func GetConfig(ctx context.Context) (Config, error) {
@@ -67,6 +70,24 @@ func GetConfig(ctx context.Context) (Config, error) {
 	}
 	c.JTWPrivateKey = *privateKey
 
+	clientID, err := getGoogleClientID(ctx, secretClient)
+	c.OAuthClientID = clientID
+	if err != nil {
+		return c, err
+	}
+
+	cs, err := getGoogleClientSecret(ctx, secretClient)
+	c.OAuthClientSecret = cs
+	if err != nil {
+		return c, err
+	}
+
+	r, err := getGoogleRedirectURL(ctx, secretClient)
+	c.OAuthRedirectURL = r
+	if err != nil {
+		return c, err
+	}
+
 	return c, nil
 }
 
@@ -108,6 +129,30 @@ func getPrivateKey(ctx context.Context, secretClient *secretmanager.Client) (str
 		return val, nil
 	}
 	return getSecretValue(ctx, secretClient, "monitor_jwt_ec_private_key")
+}
+
+func getGoogleClientID(ctx context.Context, secretClient *secretmanager.Client) (string, error) {
+	val := os.Getenv("GOOGLE_CLIENT_ID")
+	if val != "" {
+		return val, nil
+	}
+	return getSecretValue(ctx, secretClient, "monitor_google_client_id")
+}
+
+func getGoogleClientSecret(ctx context.Context, secretClient *secretmanager.Client) (string, error) {
+	val := os.Getenv("GOOGLE_CLIENT_SECRET")
+	if val != "" {
+		return val, nil
+	}
+	return getSecretValue(ctx, secretClient, "monitor_google_client_secret")
+}
+
+func getGoogleRedirectURL(ctx context.Context, secretClient *secretmanager.Client) (string, error) {
+	val := os.Getenv("GOOGLE_CLIENT_REDIRECT_URL")
+	if val != "" {
+		return val, nil
+	}
+	return getSecretValue(ctx, secretClient, "monitor_google_client_redirect_url")
 }
 
 // helper funcs

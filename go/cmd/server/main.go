@@ -33,7 +33,12 @@ func main() {
 		PublicKey:  c.JTWPublicKey,
 		PrivateKey: c.JTWPrivateKey,
 	}
-	s := gateway.NewHTTPServer(ac, jwtConfig, c.Port)
+	oaConfig := gateway.OAUTHConfig{
+		RedirectURL:  c.OAuthRedirectURL,
+		ClientID:     c.OAuthClientID,
+		ClientSecret: c.OAuthClientSecret,
+	}
+	s := gateway.NewHTTPServer(ac, jwtConfig, oaConfig, c.Port)
 	err = s.Start()
 	if err != nil {
 		log.Fatal(err.Error())

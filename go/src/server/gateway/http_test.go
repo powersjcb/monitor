@@ -36,7 +36,7 @@ func server() (gateway.HTTPServer, *mocks.Querier) {
 		PublicKey:  key.PublicKey,
 		PrivateKey: *key,
 	}
-	return gateway.NewHTTPServer(&appContext, jwtConfig, "9999"), q
+	return gateway.NewHTTPServer(&appContext, jwtConfig, gateway.OAUTHConfig{}, "9999"), q
 }
 
 func TestHTTPServer_Metric_EmptyPost(t *testing.T) {
