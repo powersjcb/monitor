@@ -84,7 +84,7 @@ func TestHTTPServer_Metric_Valid(t *testing.T) {
 	}
 
 	r := httptest.NewRequest("POST", "/metric", bytes.NewReader(data))
-	r = r.WithContext(gateway.WithUserID(r.Context(), accountID))
+	r = r.WithContext(gateway.WithAccountID(r.Context(), accountID))
 	w := httptest.NewRecorder()
 
 	q.On("InsertMetric", mock.Anything, mock.AnythingOfType("db.InsertMetricParams")).Return(metric, nil)
