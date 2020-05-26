@@ -52,6 +52,7 @@ const csrfCookieName = "monitor_csrf"
 var signingMethod = jwt.SigningMethodES256
 
 func (s HTTPServer) GoogleLoginHandler(rw http.ResponseWriter, r *http.Request) {
+	fmt.Println("login handler")
 	stateString := crypto.GetToken(32)
 	url := getConfig(s.oauthConfig).AuthCodeURL(stateString)
 	var cookie = http.Cookie{
@@ -70,7 +71,8 @@ func (s HTTPServer) GoogleLoginHandler(rw http.ResponseWriter, r *http.Request) 
 }
 
 func (s HTTPServer) GoogleCallbackHandler(rw http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie(csrfCookieName)
+	fmt.Println("callback handler")
+	cookie, err := getUniqueCookie(r, csrfCookieName)
 	if err != nil {
 		fmt.Println(err.Error())
 		rw.Write([]byte("csrf cookie not set")) // nolint
@@ -82,6 +84,7 @@ func (s HTTPServer) GoogleCallbackHandler(rw http.ResponseWriter, r *http.Reques
 		rw.WriteHeader(500)
 		return
 	}
+
 	content, err := s.getUserInfo(r.Context(), cookie.Value, r.FormValue("state"), r.FormValue("code"))
 	if err != nil {
 		fmt.Println(err.Error())
@@ -108,6 +111,7 @@ func (s HTTPServer) GoogleCallbackHandler(rw http.ResponseWriter, r *http.Reques
 const jwtCookieName = "jtw-cookie"
 
 func (s HTTPServer) setLoginCookie(rw http.ResponseWriter, r *http.Request, userInfo googleUserInfo, provider string) error {
+	fmt.Println("setting login cookie")
 	v := validator.New()
 	err := v.Struct(userInfo)
 	if err != nil {
@@ -118,6 +122,7 @@ func (s HTTPServer) setLoginCookie(rw http.ResponseWriter, r *http.Request, user
 	}
 	// https://tools.ietf.org/html/rfc7519#section-4.1
 	token := jwt.NewWithClaims(signingMethod, jwt.StandardClaims{
+		Id: 	   crypto.GetToken(32),
 		Issuer:    domainFromHost(r.URL.Host) + ":" + provider,
 		Subject:   userInfo.ID,
 		Audience:  "https://monitor.jacobpowers.me,https://jacobpowers.me",
@@ -176,17 +181,18 @@ func (s HTTPServer) Authenticated(handler func(http.ResponseWriter, *http.Reques
 		if apiKey != "" {
 			accountID, err := s.appContext.Querier.GetAccountIDForAPIKey(r.Context(), apiKey)
 			if err == nil {
-				ctx := WithUserID(r.Context(), accountID)
+				ctx := WithAccountID(r.Context(), accountID)
 				handler(rw, r.WithContext(ctx))
 				return
 			}
-			rw.WriteHeader(http.StatusUnauthorized)
+			handleUnauthorized(rw, r)
 			return
 		}
 		// check jwt
-		cookie, err := r.Cookie(jwtCookieName)
+		cookie, err := getUniqueCookie(r, jwtCookieName)
 		if err != nil || cookie == nil {
-			redirectToLogin(rw, r)
+			fmt.Println("missing jwt cookie")
+			handleUnauthorized(rw, r)
 			return
 		}
 
@@ -195,9 +201,9 @@ func (s HTTPServer) Authenticated(handler func(http.ResponseWriter, *http.Reques
 			return &s.jwtConfig.PublicKey, nil // note: interface{} must be a pointer
 		})
 		if err != nil {
-			fmt.Println(err.Error())
-			rw.Header().Del(jwtCookieName)
-			redirectToLogin(rw, r)
+			fmt.Println(claims.Id, claims.Subject)
+			expireCookies(rw, r, jwtCookieName)
+			handleUnauthorized(rw, r)
 			return
 		}
 
@@ -205,11 +211,11 @@ func (s HTTPServer) Authenticated(handler func(http.ResponseWriter, *http.Reques
 		account, err := usecases.GetOrCreateAccount(r.Context(), s.appContext.Querier, claims.Issuer, claims.Subject)
 		if err != nil {
 			fmt.Println(err.Error())
-			redirectToLogin(rw, r)
-			rw.Header().Del(jwtCookieName)
+			expireCookies(rw, r, jwtCookieName)
+			handleUnauthorized(rw, r)
 			return
 		}
-		ctx := WithUserID(r.Context(), account.ID)
+		ctx := WithAccountID(r.Context(), account.ID)
 		handler(rw, r.WithContext(ctx))
 	}
 }
@@ -218,11 +224,11 @@ type contextKey string
 
 const accountIDKey contextKey = "accountID"
 
-func WithUserID(ctx context.Context, id int64) context.Context {
+func WithAccountID(ctx context.Context, id int64) context.Context {
 	return context.WithValue(ctx, accountIDKey, id)
 }
 
-func UserIDFromContext(ctx context.Context) (int64, error) {
+func AccountIDFromContext(ctx context.Context) (int64, error) {
 	val := ctx.Value(accountIDKey)
 	id, ok := val.(int64)
 	if !ok {
@@ -231,8 +237,16 @@ func UserIDFromContext(ctx context.Context) (int64, error) {
 	return id, nil
 }
 
-func redirectToLogin(rw http.ResponseWriter, r *http.Request) {
-	http.Redirect(rw, r, loginPath, http.StatusTemporaryRedirect)
+func handleUnauthorized(rw http.ResponseWriter, r *http.Request) {
+	if r.Header.Get("Content-Type") == "application/json" {
+		rw.WriteHeader(http.StatusUnauthorized)
+		_, err := rw.Write([]byte(loginPath))
+		if err != nil {
+			fmt.Println(err.Error())
+		}
+	} else {
+		http.Redirect(rw, r, loginPath, http.StatusTemporaryRedirect)
+	}
 }
 
 func domainFromHost(host string) string {
@@ -240,4 +254,37 @@ func domainFromHost(host string) string {
 		return host
 	}
 	return strings.Split(host, ":")[0]
+}
+
+func getUniqueCookie(r *http.Request, cookieName string) (*http.Cookie, error) {
+	var res *http.Cookie
+	res = nil
+	for _, c := range r.Cookies() {
+		if c == nil {
+			continue
+		}
+		if c.Name == cookieName {
+			if res != nil {
+				return nil, errors.New("duplicate cookies")
+			}
+			res = c
+		}
+	}
+	if res == nil {
+		return nil, http.ErrNoCookie
+	}
+	return res, nil
+}
+
+func expireCookies(rw http.ResponseWriter, r *http.Request, cookieName string) {
+	for _, c := range r.Cookies() {
+		if c == nil {
+			continue
+		}
+
+		if c.Name == cookieName {
+			c.Expires = time.Now().Add(-24 * time.Second)
+			http.SetCookie(rw, c)
+		}
+	}
 }

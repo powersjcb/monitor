@@ -8,32 +8,41 @@ const buildUrl = (host: string, path: string): string => {
     return host + path;
 };
 
+function maybeRedirectOrHandle<T>(response: Response, parser: (data: any) => T, handleData: DataHandlerType<T>, errorHandler: ErrorHandlerType): void {
+    if (response.status === 401) {
+        response.text().then(t => {
+            window.location.href = t
+        }).catch(f => errorHandler("failed to get redirect url: " + f))
+    } else if (response.status !== 200) {
+        errorHandler("status_code: " + response.status + " url: " + response.url)
+    } else {
+        response.json().then(data => handleData(parser(data))).catch(errorHandler)
+    }
+}
+
+type DataHandlerType<T> = (data: T) => void
+
+type ErrorHandlerType = (err: any) => void
+
+const defaultErrorHandler = (err: any): void => {
+    console.log(err)
+}
+
 const NewAPI = (hostString: string): IAPIClient => {
     const u = new URL(hostString)
     const host = u.host
     return {
-        GetProfile(handler: (profile: Profile) => void) {
-            console.log("get profile")
+        GetProfile(handler: (profile: Profile) => void, errorHandler: ErrorHandlerType = defaultErrorHandler) {
             fetch(buildUrl(host, "/api/profile"), {
                 method: "GET",
-                redirect: "manual",
+                redirect: "follow",
                 headers: {
                     "Content-Type": "application/json"
                 }
             }).then(r => {
-                if (r.redirected) {
-                    console.log(r)
-                    window.location.href = r.url;
-                } else if (r.status !== 200) {
-                    console.log(r)
-                    return
-                }
-                r.json().then(data => {
-                    handler(ParseProfile(data))
-                }
-                ).catch(f => { console.log("failed to get/parse json" + f) })
+                maybeRedirectOrHandle(r, ParseProfile, handler, errorHandler)
             }).catch(f => {
-                console.log("request failed: " + f);
+                errorHandler("request failed: " + f)
             })
         }
     };

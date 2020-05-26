@@ -6,15 +6,16 @@ package db
 import (
 	"context"
 	"database/sql"
+	"time"
 )
 
 const getMetricStatsPerPeriod = `-- name: GetMetricStatsPerPeriod :many
 select m.source,
        m.name,
-       to_timestamp(floor((extract('epoch' from m.ts) / $1::int)) * $1::int) ts,
-       avg(m.value) avg,
-       max(m.value) max,
-       min(m.value) min
+       to_timestamp(floor((extract('epoch' from m.ts) / $1::int)) * $1::int)::timestamp ts,
+       avg(m.value)::float avg,
+       max(m.value)::float max,
+       min(m.value)::timestamp min
 from public.metrics m
 where account_id = $2::bigint
 group by m.source, m.name, ts_bucket
@@ -26,12 +27,12 @@ type GetMetricStatsPerPeriodParams struct {
 }
 
 type GetMetricStatsPerPeriodRow struct {
-	Source string      `json:"source"`
-	Name   string      `json:"name"`
-	Ts     interface{} `json:"ts"`
-	Avg    interface{} `json:"avg"`
-	Max    interface{} `json:"max"`
-	Min    interface{} `json:"min"`
+	Source string    `json:"source"`
+	Name   string    `json:"name"`
+	Ts     time.Time `json:"ts"`
+	Avg    float64   `json:"avg"`
+	Max    float64   `json:"max"`
+	Min    time.Time `json:"min"`
 }
 
 func (q *Queries) GetMetricStatsPerPeriod(ctx context.Context, arg GetMetricStatsPerPeriodParams) ([]GetMetricStatsPerPeriodRow, error) {

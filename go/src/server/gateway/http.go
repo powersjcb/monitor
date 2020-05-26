@@ -71,6 +71,7 @@ func (s *HTTPServer) Start() error {
 	// endpoints requiring authorization
 	p.Post("/metric", s.Authenticated(s.Metric))
 	p.Get("/api/profile", s.Authenticated(s.ShowAPIKey))
+	p.Get("/api/metric/stats", s.Authenticated(s.MetricStats))
 	p.Get("/", s.Authenticated(s.ShowAPIKey))
 
 	// start server
@@ -100,7 +101,7 @@ func (s HTTPServer) Metric(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := UserIDFromContext(r.Context())
+	id, err := AccountIDFromContext(r.Context())
 	if err != nil {
 		rw.WriteHeader(500)
 		return
@@ -109,7 +110,7 @@ func (s HTTPServer) Metric(rw http.ResponseWriter, r *http.Request) {
 	_, err = s.appContext.Querier.InsertMetric(r.Context(), m)
 	if err != nil {
 		fmt.Println(err.Error())
-		rw.WriteHeader(500)
+		rw.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 }
