@@ -70,6 +70,7 @@ func (s *HTTPServer) Start() error {
 
 	// endpoints requiring authorization
 	p.Post("/metric", s.Authenticated(s.Metric))
+	p.Get("/api/profile", s.Authenticated(s.ShowAPIKey))
 	p.Get("/", s.Authenticated(s.ShowAPIKey))
 
 	// start server
@@ -84,28 +85,6 @@ func (s *HTTPServer) Start() error {
 		return err
 	}
 	return nil
-}
-
-func (s HTTPServer) ShowAPIKey(rw http.ResponseWriter, r *http.Request) {
-	userID, err := UserIDFromContext(r.Context())
-	if err != nil {
-		fmt.Println("userID not available on context")
-		rw.WriteHeader(500)
-	}
-	account, err := s.appContext.Querier.GetAccountByID(r.Context(), userID)
-	if err != nil {
-		fmt.Println(err.Error())
-		rw.WriteHeader(500)
-	}
-	_, err = rw.Write([]byte(fmt.Sprintf("userID: %d, apiKey: %s", userID, account.ApiKey)))
-	if err != nil {
-		_, err = rw.Write([]byte(err.Error()))
-		if err != nil {
-			fmt.Printf("failed to write error response: %s", err.Error())
-		}
-		rw.WriteHeader(500)
-		return
-	}
 }
 
 func (s HTTPServer) Status(rw http.ResponseWriter, _ *http.Request) {

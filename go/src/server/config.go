@@ -99,11 +99,16 @@ func GetConfig(ctx context.Context) (Config, error) {
 }
 
 func getPort(_ context.Context) (string, error) {
+	// note: port conflicts with react dev server env var
 	port := os.Getenv("PORT")
-	if port == "" {
-		return port, errors.New("invalid port: '" + port + "'")
+	if port != "" {
+		return port, nil
 	}
-	return port, nil
+	port = os.Getenv("APP_PORT")
+	if port != "" {
+		return port, nil
+	}
+	return port, errors.New("invalid port: '" + port + "'")
 }
 
 func getHoneycombKey(ctx context.Context, secretClient *secretmanager.Client) (string, error) {
