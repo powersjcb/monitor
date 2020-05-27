@@ -6,7 +6,7 @@ export type Profile = {
 const ParseProfile = (data: any): Profile => {
     return {
         AccountID: parseInt(data.id),
-        ApiKey: data.api_key,
+        ApiKey: String(data.api_key),
     }
 }
 

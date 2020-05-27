@@ -6,7 +6,7 @@ RETURNING *;
 -- name: GetMetricStatsPerPeriod :many
 select m.source,
        m.name,
-       to_timestamp(floor((extract('epoch' from m.ts) / sqlc.arg(seconds)::int)) * sqlc.arg(seconds)::int)::timestamp ts,
+       (floor((extract('epoch' from m.ts) / sqlc.arg(seconds)::bigint)) * sqlc.arg(seconds)::bigint)::bigint ts_bucket,
        avg(m.value)::float avg,
        max(m.value)::float max,
        min(m.value)::float min

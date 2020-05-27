@@ -1,7 +1,9 @@
 import {ParseProfile, Profile} from "../models/profile";
+import {MetricStatsRow, ParseMetricStats} from "../models/metric";
 
 interface IAPIClient {
-    GetProfile(handler: (profile: Profile) => void): void
+    GetProfile(handler: (profile: Profile) => void, errorHandler?: ErrorHandlerType): void
+    GetMetricStats(handler: (stats: MetricStatsRow[]) => void, errorHandler?: ErrorHandlerType): void
 }
 
 const buildUrl = (host: string, path: string): string => {
@@ -41,6 +43,19 @@ const NewAPI = (hostString: string): IAPIClient => {
                 }
             }).then(r => {
                 maybeRedirectOrHandle(r, ParseProfile, handler, errorHandler)
+            }).catch(f => {
+                errorHandler("request failed: " + f)
+            })
+        },
+        GetMetricStats(handler: (stats: MetricStatsRow[]) => void, errorHandler: ErrorHandlerType = defaultErrorHandler) {
+            fetch(buildUrl(host, "/api/metric/stats"), {
+                method: "POST",
+                redirect: "follow",
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            }).then(r => {
+                maybeRedirectOrHandle(r, ParseMetricStats, handler, errorHandler)
             }).catch(f => {
                 errorHandler("request failed: " + f)
             })

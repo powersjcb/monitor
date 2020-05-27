@@ -54,7 +54,7 @@ func RunPings(ctx context.Context, apiKey string, configs []PingConfig, runOnce 
 		HTTP:      httpclient.New(10 * time.Second, apiKey),
 		Source:    source,
 		Kind:      "icmp",
-		UploadURL: "https://carbide-datum-276117.wl.r.appspot.com/metric",
+		UploadURL: "https://monitor.jacobpowers.me/api/metric",
 	})
 	return c.Start()
 }
@@ -66,7 +66,7 @@ func RunHTTPPings(ctx context.Context, apiKey string, configs []PingConfig, runO
 		HTTP:      httpclient.New(10 * time.Second, apiKey),
 		Source:    source,
 		Kind:      "http",
-		UploadURL: "https://carbide-datum-276117.wl.r.appspot.com/metric",
+		UploadURL: "https://monitor.jacobpowers.me/api/metric",
 	})
 	return c.Start()
 }

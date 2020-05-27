@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gorilla/pat"
 	"github.com/powersjcb/monitor/go/src/client"
+	"github.com/powersjcb/monitor/go/src/lib/httpserver"
 	"github.com/powersjcb/monitor/go/src/server/db"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/api/trace"
@@ -20,9 +21,14 @@ type Logger struct {
 	handler http.Handler
 }
 
-func (l *Logger) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	fmt.Printf("%s %s %v\n", r.Method, r.URL.Path, time.Now())
+func (l *Logger) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
+	w := httpserver.NewStatusRecorder(rw)
+	start := time.Now()
+	// request
+	fmt.Printf("request - method: %s path: %s %v\n", r.Method, r.URL.Path, start)
 	l.handler.ServeHTTP(w, r)
+	// response
+	fmt.Printf("response - method: %s path: %s status: %d duration: %s\n", r.Method, r.URL.Path, w.Status, time.Now().Sub(start))
 }
 
 func NewLogger(handler http.Handler) *Logger {
@@ -69,9 +75,11 @@ func (s *HTTPServer) Start() error {
 	p.Get("/pings", s.Ping)
 
 	// endpoints requiring authorization
-	p.Post("/metric", s.Authenticated(s.Metric))
-	p.Get("/api/profile", s.Authenticated(s.ShowAPIKey))
+	p.Post("/metric", s.Authenticated(s.Metric)) // do not remove until after updating all clients
+
+	p.Post("/api/metric", s.Authenticated(s.Metric))
 	p.Get("/api/metric/stats", s.Authenticated(s.MetricStats))
+	p.Get("/api/profile", s.Authenticated(s.ShowAPIKey))
 	p.Get("/", s.Authenticated(s.ShowAPIKey))
 
 	// start server
