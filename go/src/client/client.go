@@ -51,7 +51,7 @@ func RunPings(ctx context.Context, apiKey string, configs []PingConfig, runOnce 
 	c := NewService(ctx, configs, time.Second*10, runOnce)
 	c.AddHandler(LoggingHandler{})
 	c.AddHandler(UploadHandler{
-		HTTP:      httpclient.New(10 * time.Second, apiKey),
+		HTTP:      httpclient.New(10*time.Second, apiKey),
 		Source:    source,
 		Kind:      "icmp",
 		UploadURL: "https://monitor.jacobpowers.me/api/metric",
@@ -63,7 +63,7 @@ func RunHTTPPings(ctx context.Context, apiKey string, configs []PingConfig, runO
 	c := NewHTTPService(ctx, configs, time.Second*1, runOnce)
 	c.AddHandler(LoggingHandler{})
 	c.AddHandler(UploadHandler{
-		HTTP:      httpclient.New(10 * time.Second, apiKey),
+		HTTP:      httpclient.New(10*time.Second, apiKey),
 		Source:    source,
 		Kind:      "http",
 		UploadURL: "https://monitor.jacobpowers.me/api/metric",

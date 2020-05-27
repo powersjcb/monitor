@@ -19,6 +19,7 @@ const ParseMetricStatsRow = (data: any): MetricStatsRow => {
 };
 
 export const ParseMetricStats = (data: any): Array<MetricStatsRow> => {
+    console.log(data)
     const res: Array<MetricStatsRow> = [];
     if (!Array.isArray(data)) {
         return res;

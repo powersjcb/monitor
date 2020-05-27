@@ -10,7 +10,7 @@ require (
 	github.com/go-playground/universal-translator v0.17.0 // indirect
 	github.com/google/uuid v1.1.1 // indirect
 	github.com/gorilla/context v1.1.1 // indirect
-	github.com/gorilla/mux v1.7.4 // indirect
+	github.com/gorilla/mux v1.7.4
 	github.com/gorilla/pat v1.0.1
 	github.com/honeycombio/opentelemetry-exporter-go v0.5.0
 	github.com/jackpal/gateway v1.0.6

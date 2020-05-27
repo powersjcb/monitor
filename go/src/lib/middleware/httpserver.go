@@ -1,14 +1,15 @@
-package httpserver
+package middleware
 
 import (
 	"net/http"
 	"sync"
 )
 
+// ref: https://upgear.io/blog/golang-tip-wrapping-http-response-writer-for-middleware/
 type StatusRecorder struct {
 	http.ResponseWriter
 	Status int
-	mux sync.Mutex
+	mux    sync.Mutex
 }
 
 func (s *StatusRecorder) WriteHeader(statusCode int) {
@@ -19,6 +20,6 @@ func (s *StatusRecorder) WriteHeader(statusCode int) {
 func NewStatusRecorder(w http.ResponseWriter) *StatusRecorder {
 	return &StatusRecorder{
 		ResponseWriter: w,
-		Status: 0,
+		Status:         0,
 	}
 }

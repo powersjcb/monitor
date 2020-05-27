@@ -38,7 +38,7 @@ func getConfig(config OAUTHConfig) *oauth2.Config {
 
 type OAUTHConfig struct {
 	RedirectURL  string
-	ClientID 	 string
+	ClientID     string
 	ClientSecret string
 }
 
@@ -52,7 +52,6 @@ const csrfCookieName = "monitor_csrf"
 var signingMethod = jwt.SigningMethodES256
 
 func (s HTTPServer) GoogleLoginHandler(rw http.ResponseWriter, r *http.Request) {
-	fmt.Println("login handler")
 	stateString := crypto.GetToken(32)
 	url := getConfig(s.oauthConfig).AuthCodeURL(stateString)
 	var cookie = http.Cookie{
@@ -71,11 +70,13 @@ func (s HTTPServer) GoogleLoginHandler(rw http.ResponseWriter, r *http.Request) 
 }
 
 func (s HTTPServer) GoogleCallbackHandler(rw http.ResponseWriter, r *http.Request) {
-	fmt.Println("callback handler")
 	cookie, err := getUniqueCookie(r, csrfCookieName)
 	if err != nil {
-		fmt.Println(err.Error())
-		rw.Write([]byte("csrf cookie not set")) // nolint
+		fmt.Println("cookie not set" + err.Error())
+		_, err = rw.Write([]byte("csrf cookie not set"))
+		if err != nil {
+			fmt.Println("rw.Write error: " + err.Error())
+		}
 		rw.WriteHeader(400)
 		return
 	}
@@ -87,7 +88,7 @@ func (s HTTPServer) GoogleCallbackHandler(rw http.ResponseWriter, r *http.Reques
 
 	content, err := s.getUserInfo(r.Context(), cookie.Value, r.FormValue("state"), r.FormValue("code"))
 	if err != nil {
-		fmt.Println(err.Error())
+		fmt.Println("getUserInfo: ", err.Error())
 		http.Redirect(rw, r, "/", http.StatusTemporaryRedirect)
 		return
 	}
@@ -95,13 +96,13 @@ func (s HTTPServer) GoogleCallbackHandler(rw http.ResponseWriter, r *http.Reques
 	var user googleUserInfo
 	err = json.Unmarshal(content, &user)
 	if err != nil {
-		fmt.Println(err.Error())
+		fmt.Println("json.Unmarshal: ", err.Error())
 		rw.WriteHeader(500)
 		return
 	}
 	err = s.setLoginCookie(rw, r, user, "google")
 	if err != nil {
-		fmt.Println(err.Error())
+		fmt.Println("json.Unmarshal: ", err.Error())
 		rw.WriteHeader(500)
 		return
 	}
@@ -122,7 +123,7 @@ func (s HTTPServer) setLoginCookie(rw http.ResponseWriter, r *http.Request, user
 	}
 	// https://tools.ietf.org/html/rfc7519#section-4.1
 	token := jwt.NewWithClaims(signingMethod, jwt.StandardClaims{
-		Id: 	   crypto.GetToken(32),
+		Id:        crypto.GetToken(32),
 		Issuer:    domainFromHost(r.URL.Host) + ":" + provider,
 		Subject:   userInfo.ID,
 		Audience:  "https://monitor.jacobpowers.me,https://jacobpowers.me",
@@ -210,7 +211,7 @@ func (s HTTPServer) Authenticated(handler func(http.ResponseWriter, *http.Reques
 		// todo: cache this lookup
 		account, err := usecases.GetOrCreateAccount(r.Context(), s.appContext.Querier, claims.Issuer, claims.Subject)
 		if err != nil {
-			fmt.Println(err.Error())
+			fmt.Println("usecases.GetOrCreateAccount: " + err.Error())
 			expireCookies(rw, r, jwtCookieName)
 			handleUnauthorized(rw, r)
 			return
@@ -242,7 +243,7 @@ func handleUnauthorized(rw http.ResponseWriter, r *http.Request) {
 		rw.WriteHeader(http.StatusUnauthorized)
 		_, err := rw.Write([]byte(loginPath))
 		if err != nil {
-			fmt.Println(err.Error())
+			fmt.Println("rw.Write error: " + err.Error())
 		}
 	} else {
 		http.Redirect(rw, r, loginPath, http.StatusTemporaryRedirect)

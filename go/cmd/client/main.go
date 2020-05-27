@@ -30,11 +30,11 @@ func main() {
 	gw, err := gateway.DiscoverGateway()
 	if err == nil && gw != nil && gw.String() != "" {
 		if strings.Contains(gw.String(), ":") {
-			fmt.Printf("ipv6 unimplemented: %s", gw.String())
+			fmt.Println("ipv6 unimplemented: ", gw.String())
 		}
 		pingConfigs = append(pingConfigs, client.PingConfig{URL: gw.String(), Name: "defaultGateway", Period: 5 * time.Second})
 	} else if err != nil {
-		fmt.Printf("unable to discover default gateway: %s", err.Error())
+		fmt.Println("unable to discover default gateway: ", err.Error())
 	}
 	h, _ := os.Hostname()
 	apiKey := os.Getenv("MONITOR_API_KEY")

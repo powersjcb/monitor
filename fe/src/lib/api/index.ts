@@ -3,7 +3,7 @@ import {MetricStatsRow, ParseMetricStats} from "../models/metric";
 
 interface IAPIClient {
     GetProfile(handler: (profile: Profile) => void, errorHandler?: ErrorHandlerType): void
-    GetMetricStats(handler: (stats: MetricStatsRow[]) => void, errorHandler?: ErrorHandlerType): void
+    GetMetricStats(bucket_size: number, handler: (stats: MetricStatsRow[]) => void, errorHandler?: ErrorHandlerType): void
 }
 
 const buildUrl = (host: string, path: string): string => {
@@ -18,7 +18,10 @@ function maybeRedirectOrHandle<T>(response: Response, parser: (data: any) => T, 
     } else if (response.status !== 200) {
         errorHandler("status_code: " + response.status + " url: " + response.url)
     } else {
-        response.json().then(data => handleData(parser(data))).catch(errorHandler)
+        response.json().then(data => {
+            console.log(response, data)
+            handleData(parser(data))
+        }).catch(errorHandler)
     }
 }
 
@@ -47,13 +50,16 @@ const NewAPI = (hostString: string): IAPIClient => {
                 errorHandler("request failed: " + f)
             })
         },
-        GetMetricStats(handler: (stats: MetricStatsRow[]) => void, errorHandler: ErrorHandlerType = defaultErrorHandler) {
+        GetMetricStats(bucket_size: number, handler: (stats: MetricStatsRow[]) => void, errorHandler: ErrorHandlerType = defaultErrorHandler) {
             fetch(buildUrl(host, "/api/metric/stats"), {
                 method: "POST",
                 redirect: "follow",
                 headers: {
                     "Content-Type": "application/json"
-                }
+                },
+                body: JSON.stringify({
+                    seconds: bucket_size,
+                }),
             }).then(r => {
                 maybeRedirectOrHandle(r, ParseMetricStats, handler, errorHandler)
             }).catch(f => {

@@ -15,15 +15,15 @@ import (
 )
 
 type Config struct {
-	Port          string
-	Database      string
-	HCAPIKey      string
-	JTWPublicKey  ecdsa.PublicKey
-	JTWPrivateKey ecdsa.PrivateKey
+	Port              string
+	Database          string
+	HCAPIKey          string
+	JTWPublicKey      ecdsa.PublicKey
+	JTWPrivateKey     ecdsa.PrivateKey
 	OAuthClientID     string
 	OAuthClientSecret string
 	OAuthRedirectURL  string
-	APIKey			  string
+	APIKey            string
 }
 
 func GetConfig(ctx context.Context) (Config, error) {
