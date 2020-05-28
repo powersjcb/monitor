@@ -28,7 +28,7 @@ func main() {
 
 	pingConfigs := client.DefaultPingConfigs
 	gw, err := gateway.DiscoverGateway()
-	if err == nil && gw != nil && gw.String() != "" {
+	if err == nil && !gw.IsUnspecified() && gw.String() != "" {
 		if strings.Contains(gw.String(), ":") {
 			fmt.Println("ipv6 unimplemented: ", gw.String())
 		}
