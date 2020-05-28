@@ -40,7 +40,7 @@ func (q *Queries) GetMetricStatsPerPeriod(ctx context.Context, arg GetMetricStat
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetMetricStatsPerPeriodRow
+	items := make([]GetMetricStatsPerPeriodRow, 0)
 	for rows.Next() {
 		var i GetMetricStatsPerPeriodRow
 		if err := rows.Scan(
