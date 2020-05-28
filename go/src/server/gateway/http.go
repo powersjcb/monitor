@@ -28,7 +28,7 @@ func (l *Logger) ServeHTTP(rw http.ResponseWriter, r *http.Request) {
 	fmt.Printf("request - method: %s path: %s %v\n", r.Method, r.URL.Path, start)
 	l.handler.ServeHTTP(w, r)
 	// response
-	fmt.Printf("response - method: %s path: %s status: %d duration: %s\n", r.Method, r.URL.Path, w.Status, time.Now().Sub(start))
+	fmt.Printf("response - method: %s path: %s status: %d duration: %s\n", r.Method, r.URL.Path, w.Status, time.Since(start))
 }
 
 func NewLogger(handler http.Handler) *Logger {
