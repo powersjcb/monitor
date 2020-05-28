@@ -4,6 +4,7 @@ import {ProfileHeader} from "../../presentational/profileHeader";
 import {Profile} from "../../lib/models/profile";
 import {NewAPI} from "../../lib/api";
 import {MetricStatsRow, ParseMetricStats} from "../../lib/models/metric";
+import {StatsPlot} from "../../presentational/statsPlot";
 
 const hour = 3600;
 
@@ -17,9 +18,7 @@ const LandingPage: React.FunctionComponent = () => {
     return (
         <div>
             <ProfileHeader profile={profile} />
-            <div>
-                {stats.length}
-            </div>
+            <StatsPlot stats={stats}/>
         </div>
     )
 }
