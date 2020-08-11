@@ -10,6 +10,13 @@
 - [ ] investigate using aggregates for data storage 
 
 # Notes
+
+How to run the client locally
+- `$ git clone https://github.com/powersjcb/monitor`
+- `$ go build -o monitor-client ./go/cmd/client/main.go`
+- `$ sudo MONITOR_API_KEY=<secret> ./monitor-client`
+
+
 How to deploy the app to production:
 - GO111MODULE=on gcloud app deploy app.yaml
 
